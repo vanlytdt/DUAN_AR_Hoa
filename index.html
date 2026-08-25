@@ -3,331 +3,547 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>AR Hóa Học - Na Bốc Cháy Trong Nước</title>
-    
-    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <title>AR Hóa Học 3D - Mô Hình Sản Phẩm & Âm Thanh</title>
+
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
-    
+
     <style>
-        body { margin: 0; overflow: hidden; font-family: sans-serif; }
-        #bang-thong-bao {
-            position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.92); color: white; padding: 12px 20px;
-            border-radius: 12px; text-align: center; z-index: 9999; font-size: 14px;
-            width: 85%; max-width: 380px; box-shadow: 0 4px 15px rgba(0,0,0,0.6);
-            border: 1px solid rgba(255,255,255,0.15);
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background: transparent !important;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
-        #tieu-de { font-weight: bold; color: #fbbf24; font-size: 16px; margin-bottom: 4px; }
-        
-        #lop-kich-hoat {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.96); z-index: 99999; display: flex;
-            flex-direction: column; justify-content: center; align-items: center; color: white;
-        }
-        #btn-kich-hoat {
-            padding: 14px 28px; font-size: 16px; font-weight: bold;
-            background: #38bdf8; color: #0f172a; border: none;
-            border-radius: 30px; cursor: pointer; margin-top: 15px;
-            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
-        }
-        
-        /* Thêm debug info */
-        #debug-info {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.8);
-            color: #00ff00;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            z-index: 10000;
+        .a-canvas {
+            background: transparent !important;
+            z-index: 2 !important;
             pointer-events: none;
         }
+        video {
+            position: absolute !important;
+            top: 0 !important; left: 0 !important;
+            width: 100% !important; height: 100% !important;
+            object-fit: cover !important;
+            z-index: 1 !important;
+        }
+        #hud {
+            position: fixed;
+            top: 12px; left: 12px; right: 12px;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #ffffff;
+            padding: 10px 14px;
+            font-size: 13px;
+            z-index: 99999;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #reaction-info {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.95);
+            border: 2px solid #38bdf8;
+            color: white;
+            padding: 14px 22px;
+            border-radius: 12px;
+            z-index: 99999;
+            text-align: center;
+            display: none;
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.5);
+            min-width: 320px;
+            max-width: 90%;
+        }
+        .dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+            background: #eab308;
+        }
+        .dot-green { background: #22c55e !important; }
     </style>
 </head>
 <body>
-    
-    <div id="lop-kich-hoat">
-        <h2 style="margin: 0; font-size: 20px; color: #38bdf8;">PHÒNG THÍ NGHIỆM AR</h2>
-        <p style="color: #94a3b8; font-size: 14px; margin-top: 8px;">Nhấn để bật Camera và Âm thanh thuyết minh</p>
-        <button id="btn-kich-hoat" onclick="moKhoaTraiNghiem()">BẮT ĐẦU TRẢI NGHIỆM</button>
+
+    <div id="hud">
+        <div><span id="status-dot" class="dot"></span><span id="status-label">Đang bật camera...</span></div>
+        <div>Thẻ đang nhận: <b id="target-label" style="color: #38bdf8;">Chưa có</b></div>
     </div>
-    
-    <div id="bang-thong-bao">
-        <div id="tieu-de">Đang tìm thẻ...</div>
-        <div id="noi-dung">Hãy hướng camera vào thẻ Na và H₂O rồi đẩy lại gần nhau</div>
+
+    <!-- Bảng thông tin phản ứng & hiện tượng -->
+    <div id="reaction-info">
+        <h3 id="reaction-title" style="margin-bottom: 4px; font-size: 16px; color: #facc15;">⚗️ PHẢN ỨNG HÓA HỌC!</h3>
+        <p id="reaction-desc" style="font-size: 13px; color: #38bdf8; font-weight: bold; margin-bottom: 4px;"></p>
+        <p id="reaction-phenomenon" style="font-size: 12px; color: #cbd5e1;"></p>
     </div>
-    
-    <!-- Debug info -->
-    <div id="debug-info">
-        <div>Thẻ Na: <span id="debug-na">❌</span></div>
-        <div>Thẻ H2O: <span id="debug-h2o">❌</span></div>
-        <div>Khoảng cách: <span id="debug-distance">-</span></div>
-        <div>Trạng thái: <span id="debug-status">Đang chờ...</span></div>
-    </div>
-    
+
     <a-scene 
-        mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 2; autoStart: true; filterMinCF:0.001; filterBeta: 0.5; missTolerance: 5; warmupTolerance: 5;" 
+        mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 4; filterMinCF: 0.001; filterBeta: 100; missTolerance: 3;"
+        embedded
         color-space="sRGB" 
-        renderer="alpha: true; antialias: true;"
+        renderer="colorManagement: true; alpha: true; antialias: true;" 
         vr-mode-ui="enabled: false" 
         device-orientation-permission-ui="enabled: false">
         
-        <!-- Ánh sáng -->
-        <a-light type="ambient" color="#ffffff" intensity="1.2"></a-light>
-        <a-light type="directional" color="#ffffff" intensity="0.8" position="0 3 2"></a-light>
-        
+        <a-entity light="type: ambient; color: #ffffff; intensity: 1.6;"></a-entity>
+        <a-entity light="type: directional; color: #ffffff; intensity: 1.3; position: 1 3 1;"></a-entity>
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-        
-        <!-- Thẻ 0: Natri (Na) -->
-        <a-entity id="the-na" mindar-image-target="targetIndex: 0">
-            <a-entity id="vat-the-na">
-                <a-sphere position="0 0 0" radius="0.22" material="color: #c0c0c0; shader: standard; metalness: 0.8; roughness: 0.2"></a-sphere>
-                <a-text value="Natri (Na)" position="0 0.35 0" align="center" scale="0.6 0.6 0.6" color="#ffffff"></a-text>
-            </a-entity>
-            
-            <!-- Hiệu ứng phản ứng -->
-            <a-entity id="cum-phan-ung" visible="false">
-                <!-- Giọt Natri nóng chảy -->
-                <a-sphere position="0 0.05 0" radius="0.1" material="color: #ffffff; shader: flat"
-                    animation="property: position; to: 0.1 0.08 0.08; dir: alternate; dur: 150; loop: true">
-                </a-sphere>
-                
-                <!-- Lửa cam -->
-                <a-cone position="0 0.3 0" rotation="0 0 0" radius-bottom="0.26" radius-top="0.01" height="0.65" 
-                    material="color: #ea580c; shader: flat; opacity: 0.85; transparent: true; depthWrite: false"
-                    animation="property: scale; to: 1.3 1.5 1.3; dir: alternate; dur: 110; loop: true">
-                </a-cone>
-                
-                <!-- Lửa vàng -->
-                <a-cone position="0 0.28 0" rotation="0 45 0" radius-bottom="0.18" radius-top="0.01" height="0.55" 
-                    material="color: #facc15; shader: flat; opacity: 0.95; transparent: true; depthWrite: false"
-                    animation="property: scale; to: 1.4 1.4 1.4; dir: alternate; dur: 80; loop: true">
-                </a-cone>
-                
-                <!-- Lõi lửa -->
-                <a-sphere position="0 0.15 0" radius="0.12" 
-                    material="color: #ffffff; shader: flat"
-                    animation="property: scale; to: 1.25 1.4 1.25; dir: alternate; dur: 60; loop: true">
-                </a-sphere>
-                
-                <!-- Khói trắng -->
-                <a-sphere position="0 0.65 0" radius="0.12" material="color: #ffffff; shader: flat; opacity: 0.8; transparent: true; depthWrite: false"
-                    animation="property: position; to: 0.05 1.3 0; dur: 700; loop: true"
-                    animation__sz="property: scale; to: 1.8 1.8 1.8; dur: 700; loop: true"
-                    animation__op="property: material.opacity; to: 0; dur: 700; loop: true">
-                </a-sphere>
-                
-                <a-text value="Na chay ruc ro!" position="0 1.75 0" align="center" scale="0.65 0.65 0.65" color="#facc15"></a-text>
-            </a-entity>
+
+        <!-- TARGET 0: Na (Sodium) -->
+        <a-entity mindar-image-target="targetIndex: 0" id="card-0">
+            <a-sphere position="0 0 0.2" radius="0.22" color="#0284c7" material="roughness: 0.3; metalness: 0.2"></a-sphere>
+            <a-text value="Na (Sodium)" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
         </a-entity>
-        
-        <!-- Thẻ 1: Nước (H2O) -->
-        <a-entity id="the-nuoc" mindar-image-target="targetIndex: 1">
-            <a-entity id="vat-the-nuoc">
-                <a-sphere position="0 0 0" radius="0.18" material="color: #ff0000; shader: standard; roughness: 0.4"></a-sphere>
-                <a-sphere position="-0.15 0.12 0" radius="0.1" material="color: #ffffff; shader: standard; roughness: 0.4"></a-sphere>
-                <a-sphere position="0.15 0.12 0" radius="0.1" material="color: #ffffff; shader: standard; roughness: 0.4"></a-sphere>
-                <a-text value="Nuoc (H2O)" position="0 0.35 0" align="center" scale="0.6 0.6 0.6" color="#ffffff"></a-text>
-            </a-entity>
+
+        <!-- TARGET 1: H2O (Water) -->
+        <a-entity mindar-image-target="targetIndex: 1" id="card-1">
+            <a-sphere position="0 0 0.2" radius="0.16" color="#ef4444" material="roughness: 0.3"></a-sphere>
+            <a-sphere position="-0.16 0.08 0.2" radius="0.09" color="#ffffff" material="roughness: 0.3"></a-sphere>
+            <a-sphere position="0.16 0.08 0.2" radius="0.09" color="#ffffff" material="roughness: 0.3"></a-sphere>
+            <a-text value="H2O (Water)" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
         </a-entity>
+
+        <!-- TARGET 2: NaOH -->
+        <a-entity mindar-image-target="targetIndex: 2" id="card-2">
+            <a-cylinder id="naoh-mesh" position="0 0 0.15" radius="0.16" height="0.3" color="#10b981" material="roughness: 0.3; opacity: 0.9"></a-cylinder>
+            <a-text value="NaOH" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+        </a-entity>
+
+        <!-- TARGET 3: Phenolphthalein -->
+        <a-entity mindar-image-target="targetIndex: 3" id="card-3">
+            <a-octahedron position="0 0 0.2" radius="0.22" color="#db2777" material="roughness: 0.3"></a-octahedron>
+            <a-text value="Phenol" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+        </a-entity>
+
+        <!-- TARGET 4: Pb(NO3)2 -->
+        <a-entity mindar-image-target="targetIndex: 4" id="card-4">
+            <a-box position="0 0 0.2" width="0.26" height="0.26" depth="0.26" color="#94a3b8" material="roughness: 0.3"></a-box>
+            <a-text value="Pb(NO3)2" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+        </a-entity>
+
+        <!-- TARGET 5: KI -->
+        <a-entity mindar-image-target="targetIndex: 5" id="card-5">
+            <a-dodecahedron position="0 0 0.2" radius="0.2" color="#eab308" material="roughness: 0.3"></a-dodecahedron>
+            <a-text value="KI" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+        </a-entity>
+
+        <!-- TARGET 6: (NH4)2Cr2O7 -->
+        <a-entity mindar-image-target="targetIndex: 6" id="card-6">
+            <a-tetrahedron position="0 0 0.2" radius="0.24" color="#ea580c" material="roughness: 0.3"></a-tetrahedron>
+            <a-text value="(NH4)2Cr2O7" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+        </a-entity>
+
+        <!-- TARGET 7: Heat -->
+        <a-entity mindar-image-target="targetIndex: 7" id="card-7">
+            <a-cone position="0 0 0.2" radius-bottom="0.2" radius-top="0" height="0.38" color="#ef4444" material="roughness: 0.3"></a-cone>
+            <a-text value="Heat (t*)" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+        </a-entity>
+
+        <!-- Container chứa sản phẩm và hiệu ứng tạo ra -->
+        <a-entity id="reaction-container"></a-entity>
+
     </a-scene>
-    
+
     <script>
-        let audioCtx = null;
-        let amThanhNoise = null;
-        let giongNoiChuan = null;
-        
-        // Elements
-        const theNa = document.querySelector('#the-na');
-        const theNuoc = document.querySelector('#the-nuoc');
-        const vatTheNa = document.querySelector('#vat-the-na');
-        const vatTheNuoc = document.querySelector('#vat-the-nuoc');
-        const cumPhanUng = document.querySelector('#cum-phan-ung');
-        const tieuDe = document.querySelector('#tieu-de');
-        const noiDung = document.querySelector('#noi-dung');
-        const debugNa = document.querySelector('#debug-na');
-        const debugH2o = document.querySelector('#debug-h2o');
-        const debugDistance = document.querySelector('#debug-distance');
-        const debugStatus = document.querySelector('#debug-status');
-        
-        let daXayRaPhanUng = false;
-        let naVisible = false;
-        let h2oVisible = false;
-        
-        function layGiongDoc() {
-            if ('speechSynthesis' in window) {
-                const voices = window.speechSynthesis.getVoices();
-                giongNoiChuan = voices.find(v => v.lang.includes('vi')) || null;
+        const scene = document.querySelector('a-scene');
+        const statusLabel = document.getElementById('status-label');
+        const statusDot = document.getElementById('status-dot');
+        const targetLabel = document.getElementById('target-label');
+        const reactionInfo = document.getElementById('reaction-info');
+        const reactionTitle = document.getElementById('reaction-title');
+        const reactionDesc = document.getElementById('reaction-desc');
+        const reactionPhenomenon = document.getElementById('reaction-phenomenon');
+
+        const cardNames = ['Na', 'H2O', 'NaOH', 'Phenol', 'Pb(NO3)2', 'KI', '(NH4)2Cr2O7', 'Heat'];
+
+        // Dữ liệu 4 phản ứng chi tiết
+        const reactions = {
+            '0-1': {
+                title: '2Na + 2H₂O → 2NaOH + H₂↑',
+                desc: 'Sản phẩm: Dung dịch NaOH + Khí Hydro (H₂)',
+                phenomenon: 'Hiện tượng: Miếng Na nóng chảy vo tròn chạy trên mặt nước, sủi bọt khí mãnh liệt, tỏa nhiệt và bốc cháy lửa vàng!',
+                color: '#ff6b35',
+                type: 'na_h2o'
+            },
+            '2-3': {
+                title: 'NaOH + Phenolphthalein → Dung Dịch Hồng',
+                desc: 'Sản phẩm: Phức chất kiềm đổi màu',
+                phenomenon: 'Hiện tượng: Dung dịch không màu lập tức chuyển sang màu hồng cánh sen đặc trưng của môi trường Base (pH > 9)!',
+                color: '#ec4899',
+                type: 'naoh_phenol'
+            },
+            '4-5': {
+                title: 'Pb(NO₃)₂ + 2KI → PbI₂↓ + 2KNO₃',
+                desc: 'Sản phẩm: Kết tủa Chì(II) Iodua (PbI₂) + Muối KNO₃',
+                phenomenon: 'Hiện tượng: Xuất hiện kết tủa màu vàng tươi lấp lánh như cơn mưa bụi vàng rơi xuống đáy ống nghiệm!',
+                color: '#eab308',
+                type: 'lead_iodide'
+            },
+            '6-7': {
+                title: '(NH₄)₂Cr₂O₇ (t°) → Cr₂O₃ + N₂↑ + 4H₂O',
+                desc: 'Sản phẩm: Tàn tro Cr₂O₃ + Khí Nitơ (N₂) + Hơi nước',
+                phenomenon: 'Hiện tượng: Muối màu cam bùng cháy, tự phun trào tàn tro xốp màu xanh thẫm và tia lửa giống như núi lửa mini!',
+                color: '#f97316',
+                type: 'volcano'
             }
-        }
-        if ('speechSynthesis' in window) window.speechSynthesis.onvoiceschanged = layGiongDoc;
-        
-        function moKhoaTraiNghiem() {
-            document.getElementById('lop-kich-hoat').style.display = 'none';
-            try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-            } catch (e) {
-                console.error("Lỗi Audio:", e);
+        };
+
+        // ================= HỆ THỐNG ÂM THANH TỔNG HỢP (WEB AUDIO API) =================
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let currentSoundNode = null;
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
             }
-            
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const amThanhMoDau = new SpeechSynthesisUtterance('');
-                window.speechSynthesis.speak(amThanhMoDau);
-                layGiongDoc();
-            }
-        }
-        
-        function batAmThanhLua() {
-            try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                
+            stopSound();
+
+            if (type === 'na_h2o') {
+                // Tiếng xèo xèo bọt khí nổ
                 const bufferSize = audioCtx.sampleRate * 2;
                 const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
                 const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-                
-                amThanhNoise = audioCtx.createBufferSource();
-                amThanhNoise.buffer = buffer;
-                amThanhNoise.loop = true;
-                
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioCtx.sampleRate * 0.5));
+                }
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+                noise.loop = true;
+
                 const filter = audioCtx.createBiquadFilter();
                 filter.type = 'bandpass';
-                filter.frequency.value = 1100;
-                
-                amThanhNoise.connect(filter);
+                filter.frequency.value = 1400;
+
+                noise.connect(filter);
                 filter.connect(audioCtx.destination);
-                amThanhNoise.start();
-            } catch (e) {
-                console.error("Lỗi âm thanh:", e);
+                noise.start();
+                currentSoundNode = noise;
+            } 
+            else if (type === 'naoh_phenol') {
+                // Tiếng chuông nước êm dịu
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.6); // A5
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 1.2);
             }
-        }
-        
-        function tatAmThanhLua() {
-            if (amThanhNoise) {
-                try { amThanhNoise.stop(); } catch(e){}
-                amThanhNoise = null;
+            else if (type === 'lead_iodide') {
+                // Tiếng hạt mưa rơi kết tinh
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(329.63, audioCtx.currentTime + 0.8);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.8);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.8);
             }
-        }
-        
-        function phatGiongNoi(cauNoi) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const msg = new SpeechSynthesisUtterance(cauNoi);
-                msg.lang = 'vi-VN';
-                if (giongNoiChuan) msg.voice = giongNoiChuan;
-                msg.rate = 0.95;
-                window.speechSynthesis.speak(msg);
-            }
-        }
-        
-        // SỰ KIỆN PHÁT HIỆN THẺ - QUAN TRỌNG NHẤT
-        theNa.addEventListener('targetFound', () => {
-            console.log('✅ Phát hiện thẻ Natri!');
-            naVisible = true;
-            debugNa.innerText = '✅';
-            debugNa.style.color = '#00ff00';
-            debugStatus.innerText = 'Đã thấy Na';
-        });
-        
-        theNa.addEventListener('targetLost', () => {
-            console.log('❌ Mất thẻ Natri!');
-            naVisible = false;
-            debugNa.innerText = '❌';
-            debugNa.style.color = '#ff0000';
-            debugStatus.innerText = 'Mất Na';
-        });
-        
-        theNuoc.addEventListener('targetFound', () => {
-            console.log('✅ Phát hiện thẻ Nước!');
-            h2oVisible = true;
-            debugH2o.innerText = '✅';
-            debugH2o.style.color = '#00ff00';
-            debugStatus.innerText = 'Đã thấy H2O';
-        });
-        
-        theNuoc.addEventListener('targetLost', () => {
-            console.log('❌ Mất thẻ Nước!');
-            h2oVisible = false;
-            debugH2o.innerText = '❌';
-            debugH2o.style.color = '#ff0000';
-            debugStatus.innerText = 'Mất H2O';
-        });
-        
-        // KIỂM TRA KHOẢNG CÁCH - SỬA LỖI
-        function theoDoiKhoangCach() {
-            if (naVisible && h2oVisible) {
-                // Lấy vị trí từ object3D
-                const viTriNa = theNa.object3D.position;
-                const viTriNuoc = theNuoc.object3D.position;
-                
-                // Tính khoảng cách
-                const dx = viTriNa.x - viTriNuoc.x;
-                const dy = viTriNa.y - viTriNuoc.y;
-                const dz = viTriNa.z - viTriNuoc.z;
-                const khoangCach = Math.sqrt(dx*dx + dy*dy + dz*dz);
-                
-                // Update debug
-                debugDistance.innerText = khoangCach.toFixed(3) + 'm';
-                debugStatus.innerText = 'Khoảng cách: ' + khoangCach.toFixed(2) + 'm';
-                
-                console.log(`📏 Khoảng cách: ${khoangCach.toFixed(3)}m`);
-                
-                // Kiểm tra khoảng cách kích hoạt
-                if (khoangCach < 0.8 && !daXayRaPhanUng) {
-                    console.log('⚗️ KÍCH HOẠT PHẢN ỨNG!');
-                    daXayRaPhanUng = true;
-                    
-                    tieuDe.innerText = "2Na + 2H₂O → 2NaOH + H₂↑ (Bùng cháy)";
-                    noiDung.innerText = "Natri nóng chảy vo tròn chạy trên nước, bùng ngọn lửa vàng và khói trắng bốc lên!";
-                    
-                    vatTheNa.setAttribute('visible', 'false');
-                    vatTheNuoc.setAttribute('visible', 'false');
-                    cumPhanUng.setAttribute('visible', 'true');
-                    
-                    batAmThanhLua();
-                    phatGiongNoi("Natri nóng chảy vo tròn chạy trên mặt nước, phản ứng tỏa nhiều nhiệt làm khí hi-đrô bốc cháy với ngọn lửa màu vàng rực và khói trắng bốc lên!");
+            else if (type === 'volcano') {
+                // Tiếng lửa gầm rống núi lửa
+                const bufferSize = audioCtx.sampleRate * 2.5;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1);
                 }
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+                noise.loop = true;
+
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 350;
+
+                noise.connect(filter);
+                filter.connect(audioCtx.destination);
+                noise.start();
+                currentSoundNode = noise;
+            }
+        }
+
+        function stopSound() {
+            if (currentSoundNode) {
+                try { currentSoundNode.stop(); } catch(e){}
+                currentSoundNode = null;
+            }
+        }
+
+        // ================= THEO DÕI VỊ TRÍ & TẠO SẢN PHẨM 3D =================
+        let visibleCards = new Set();
+        let currentReactionKey = null;
+
+        scene.addEventListener("arReady", () => {
+            statusLabel.innerText = "Camera sẵn sàng!";
+            statusDot.classList.add("dot-green");
+        });
+
+        for (let i = 0; i < 8; i++) {
+            const el = document.querySelector(`#card-${i}`);
+            if (el) {
+                el.addEventListener("targetFound", () => {
+                    visibleCards.add(i);
+                    updateHUD();
+                });
+                el.addEventListener("targetLost", () => {
+                    visibleCards.delete(i);
+                    updateHUD();
+                });
+            }
+        }
+
+        function updateHUD() {
+            if (visibleCards.size === 0) {
+                targetLabel.innerText = "Chưa có";
+                targetLabel.style.color = "#94a3b8";
             } else {
-                debugDistance.innerText = '-';
-                
-                // Reset khi không thấy cả 2 thẻ
-                if (!naVisible && !h2oVisible && daXayRaPhanUng) {
-                    console.log('🔄 Reset phản ứng');
-                    daXayRaPhanUng = false;
-                    vatTheNa.setAttribute('visible', 'true');
-                    vatTheNuoc.setAttribute('visible', 'true');
-                    cumPhanUng.setAttribute('visible', 'false');
-                    tatAmThanhLua();
-                    tieuDe.innerText = "Đang tìm thẻ...";
-                    noiDung.innerText = "Hãy hướng camera vào thẻ Na và H₂O rồi đẩy lại gần nhau";
-                    debugStatus.innerText = 'Đang chờ...';
+                const names = Array.from(visibleCards).map(id => cardNames[id]);
+                targetLabel.innerText = names.join(" + ");
+                targetLabel.style.color = "#38bdf8";
+            }
+        }
+
+        const v1 = new THREE.Vector3();
+        const v2 = new THREE.Vector3();
+
+        scene.addEventListener('renderloop', () => {
+            if (visibleCards.size < 2) {
+                if (currentReactionKey) stopReaction();
+                return;
+            }
+
+            const activeList = Array.from(visibleCards);
+            let foundReaction = false;
+
+            for (let i = 0; i < activeList.length; i++) {
+                for (let j = i + 1; j < activeList.length; j++) {
+                    const id1 = activeList[i];
+                    const id2 = activeList[j];
+                    const pairKey = id1 < id2 ? `${id1}-${id2}` : `${id2}-${id1}`;
+                    const reactionData = reactions[pairKey];
+
+                    if (reactionData) {
+                        const el1 = document.querySelector(`#card-${id1}`);
+                        const el2 = document.querySelector(`#card-${id2}`);
+
+                        if (el1 && el2 && el1.object3D && el2.object3D) {
+                            el1.object3D.getWorldPosition(v1);
+                            el2.object3D.getWorldPosition(v2);
+
+                            const distance = v1.distanceTo(v2);
+
+                            // Khoảng cách kích hoạt phản ứng
+                            if (distance < 1.3) {
+                                foundReaction = true;
+                                if (currentReactionKey !== pairKey) {
+                                    triggerReaction(pairKey, reactionData, v1, v2);
+                                }
+                                return;
+                            }
+                        }
+                    }
                 }
             }
-            
-            requestAnimationFrame(theoDoiKhoangCach);
+
+            if (!foundReaction && currentReactionKey) {
+                stopReaction();
+            }
+        });
+
+        function triggerReaction(key, data, pos1, pos2) {
+            currentReactionKey = key;
+            reactionInfo.style.display = "block";
+            reactionInfo.style.borderColor = data.color;
+            reactionTitle.innerText = "⚗️ " + data.title;
+            reactionDesc.innerText = data.desc;
+            reactionPhenomenon.innerText = data.phenomenon;
+
+            playSound(data.type);
+
+            const mid = new THREE.Vector3().addVectors(pos1, pos2).multiplyScalar(0.5);
+            buildReactionProducts(data.type, mid);
         }
-        
-        // Bắt đầu theo dõi sau 1 giây để đảm bảo scene đã load
-        setTimeout(() => {
-            console.log('🚀 Bắt đầu theo dõi khoảng cách');
-            theoDoiKhoangCach();
-        }, 1000);
-        
-        // Log khi scene ready
-        document.querySelector('a-scene').addEventListener('arReady', () => {
-            console.log('✅ AR Sẵn sàng!');
-            debugStatus.innerText = 'AR sẵn sàng!';
-        });
-        
-        document.querySelector('a-scene').addEventListener('arError', (e) => {
-            console.error('❌ Lỗi AR:', e);
-            debugStatus.innerText = 'Lỗi AR!';
-        });
+
+        function stopReaction() {
+            currentReactionKey = null;
+            reactionInfo.style.display = "none";
+            stopSound();
+
+            const container = document.getElementById('reaction-container');
+            while (container.firstChild) {
+                container.removeChild(container.firstChild);
+            }
+
+            const naoh = document.getElementById('naoh-mesh');
+            if (naoh) naoh.setAttribute('color', '#10b981');
+        }
+
+        // Tạo mô hình sản phẩm 3D và hiện tượng tại tọa độ tâm
+        function buildReactionProducts(type, pos) {
+            const container = document.getElementById('reaction-container');
+            container.innerHTML = '';
+
+            const root = document.createElement('a-entity');
+            root.setAttribute('position', `${pos.x} ${pos.y} ${pos.z}`);
+
+            if (type === 'na_h2o') {
+                // 1. Khối dung dịch NaOH tạo thành
+                const naohProd = document.createElement('a-cylinder');
+                naohProd.setAttribute('radius', '0.25');
+                naohProd.setAttribute('height', '0.15');
+                naohProd.setAttribute('color', '#06b6d4');
+                naohProd.setAttribute('opacity', '0.8');
+                root.appendChild(naohProd);
+
+                // 2. Bọt khí Hydro (H2) bay lên
+                for (let i = 0; i < 18; i++) {
+                    const bubble = document.createElement('a-sphere');
+                    const ox = (Math.random() - 0.5) * 0.3;
+                    const oz = (Math.random() - 0.5) * 0.3;
+                    bubble.setAttribute('position', `${ox} 0.1 ${oz}`);
+                    bubble.setAttribute('radius', '0.04');
+                    bubble.setAttribute('color', '#ffffff');
+                    bubble.setAttribute('opacity', '0.85');
+                    bubble.setAttribute('animation', `
+                        property: position;
+                        to: ${ox * 1.5} ${0.7 + Math.random() * 0.5} ${oz * 1.5};
+                        dur: ${800 + Math.random() * 600};
+                        easing: easeOutQuad;
+                        loop: true;
+                    `);
+                    root.appendChild(bubble);
+                }
+
+                // 3. Tia lửa vàng bốc cháy của Na
+                const flame = document.createElement('a-cone');
+                flame.setAttribute('position', '0 0.15 0');
+                flame.setAttribute('radius-bottom', '0.12');
+                flame.setAttribute('height', '0.35');
+                flame.setAttribute('color', '#ff9900');
+                flame.setAttribute('material', 'emissive: #ff5500; emissiveIntensity: 0.8');
+                flame.setAttribute('animation', 'property: scale; to: 1.3 1.5 1.3; dur: 200; dir: alternate; loop: true');
+                root.appendChild(flame);
+
+                const label = document.createElement('a-text');
+                label.setAttribute('value', 'NaOH (aq) + H2 (khi)');
+                label.setAttribute('align', 'center');
+                label.setAttribute('position', '0 0.8 0');
+                label.setAttribute('scale', '0.9 0.9 0.9');
+                label.setAttribute('color', '#ffedd5');
+                root.appendChild(label);
+            } 
+            else if (type === 'naoh_phenol') {
+                // Đổi dung dịch sang khối màu hồng cánh sen nở to
+                const pinkFluid = document.createElement('a-sphere');
+                pinkFluid.setAttribute('radius', '0.32');
+                pinkFluid.setAttribute('color', '#f43f5e');
+                pinkFluid.setAttribute('opacity', '0.85');
+                pinkFluid.setAttribute('animation', 'property: scale; from: 0.2 0.2 0.2; to: 1.1 1.1 1.1; dur: 1200; easing: easeOutElastic');
+                root.appendChild(pinkFluid);
+
+                const naoh = document.getElementById('naoh-mesh');
+                if (naoh) naoh.setAttribute('color', '#f43f5e');
+
+                const label = document.createElement('a-text');
+                label.setAttribute('value', 'Mau Hong (pH > 9)');
+                label.setAttribute('align', 'center');
+                label.setAttribute('position', '0 0.6 0');
+                label.setAttribute('scale', '0.9 0.9 0.9');
+                label.setAttribute('color', '#ffffff');
+                root.appendChild(label);
+            }
+            else if (type === 'lead_iodide') {
+                // Mô hình kết tủa vàng PbI2 đọng dưới đáy
+                const pptBase = document.createElement('a-cylinder');
+                pptBase.setAttribute('position', '0 -0.15 0');
+                pptBase.setAttribute('radius', '0.28');
+                pptBase.setAttribute('height', '0.08');
+                pptBase.setAttribute('color', '#eab308');
+                root.appendChild(pptBase);
+
+                // Cơn mưa tinh thể vàng lấp lánh rơi xuống
+                for (let i = 0; i < 24; i++) {
+                    const goldCrystal = document.createElement('a-octahedron');
+                    const gx = (Math.random() - 0.5) * 0.45;
+                    const gz = (Math.random() - 0.5) * 0.45;
+                    goldCrystal.setAttribute('position', `${gx} 0.5 ${gz}`);
+                    goldCrystal.setAttribute('radius', '0.035');
+                    goldCrystal.setAttribute('color', '#fde047');
+                    goldCrystal.setAttribute('material', 'metalness: 0.9; roughness: 0.1');
+                    goldCrystal.setAttribute('animation', `
+                        property: position;
+                        to: ${gx} -0.12 ${gz};
+                        dur: ${900 + Math.random() * 800};
+                        easing: easeInQuad;
+                        loop: true;
+                    `);
+                    root.appendChild(goldCrystal);
+                }
+
+                const label = document.createElement('a-text');
+                label.setAttribute('value', 'Ket tua PbI2 (Vang)');
+                label.setAttribute('align', 'center');
+                label.setAttribute('position', '0 0.65 0');
+                label.setAttribute('scale', '0.9 0.9 0.9');
+                label.setAttribute('color', '#fef08a');
+                root.appendChild(label);
+            }
+            else if (type === 'volcano') {
+                // Mô hình đống tro tàn Cr2O3 màu xanh xỉn
+                const ashPile = document.createElement('a-cone');
+                ashPile.setAttribute('position', '0 -0.05 0');
+                ashPile.setAttribute('radius-bottom', '0.35');
+                ashPile.setAttribute('height', '0.25');
+                ashPile.setAttribute('color', '#14532d');
+                root.appendChild(ashPile);
+
+                // Tia lửa và tro xốp màu xanh thẫm bung trào
+                for (let i = 0; i < 30; i++) {
+                    const ashParticle = document.createElement('a-sphere');
+                    ashParticle.setAttribute('position', '0 0.1 0');
+                    ashParticle.setAttribute('radius', '0.035');
+                    ashParticle.setAttribute('color', Math.random() > 0.4 ? '#166534' : '#f97316');
+                    
+                    const angle = Math.random() * Math.PI * 2;
+                    const spread = 0.35 + Math.random() * 0.3;
+                    const h = 0.6 + Math.random() * 0.5;
+
+                    ashParticle.setAttribute('animation', `
+                        property: position;
+                        to: ${Math.cos(angle) * spread} ${h} ${Math.sin(angle) * spread};
+                        dur: ${1000 + Math.random() * 800};
+                        easing: easeOutCubic;
+                        loop: true;
+                    `);
+                    root.appendChild(ashParticle);
+                }
+
+                const label = document.createElement('a-text');
+                label.setAttribute('value', 'Cr2O3 (Xanh luc) + N2');
+                label.setAttribute('align', 'center');
+                label.setAttribute('position', '0 0.85 0');
+                label.setAttribute('scale', '0.9 0.9 0.9');
+                label.setAttribute('color', '#86efac');
+                root.appendChild(label);
+            }
+
+            container.appendChild(root);
+        }
     </script>
 </body>
 </html>
