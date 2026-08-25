@@ -1,333 +1,45 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>AR Hóa Học - Na Bốc Cháy Trong Nước</title>
+function phatGiongNoi(cauNoi) {
+    // Thử phát giọng nói
+    if ('speechSynthesis' in window && giongNoiChuan) {
+        const msg = new SpeechSynthesisUtterance(cauNoi);
+        msg.lang = 'vi-VN';
+        msg.voice = giongNoiChuan;
+        msg.rate = 0.9;
+        window.speechSynthesis.speak(msg);
+    }
     
-    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+    // Luôn hiển thị text (fallback)
+    hienThiPhuDe(cauNoi);
+}
+
+function hienThiPhuDe(cauNoi) {
+    // Tạo hoặc cập nhật phụ đề
+    let phuDe = document.getElementById('phu-de');
     
-    <style>
-        body { margin: 0; overflow: hidden; font-family: sans-serif; }
-        #bang-thong-bao {
-            position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.92); color: white; padding: 12px 20px;
-            border-radius: 12px; text-align: center; z-index: 9999; font-size: 14px;
-            width: 85%; max-width: 380px; box-shadow: 0 4px 15px rgba(0,0,0,0.6);
-            border: 1px solid rgba(255,255,255,0.15);
-        }
-        #tieu-de { font-weight: bold; color: #fbbf24; font-size: 16px; margin-bottom: 4px; }
-        
-        #lop-kich-hoat {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.96); z-index: 99999; display: flex;
-            flex-direction: column; justify-content: center; align-items: center; color: white;
-        }
-        #btn-kich-hoat {
-            padding: 14px 28px; font-size: 16px; font-weight: bold;
-            background: #38bdf8; color: #0f172a; border: none;
-            border-radius: 30px; cursor: pointer; margin-top: 15px;
-            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
-        }
-        
-        /* Thêm debug info */
-        #debug-info {
+    if (!phuDe) {
+        phuDe = document.createElement('div');
+        phuDe.id = 'phu-de';
+        phuDe.style.cssText = `
             position: fixed;
-            bottom: 10px;
-            right: 10px;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.8);
-            color: #00ff00;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 12px;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
             z-index: 10000;
-            pointer-events: none;
-        }
-    </style>
-</head>
-<body>
+            max-width: 90%;
+            text-align: center;
+        `;
+        document.body.appendChild(phuDe);
+    }
     
-    <div id="lop-kich-hoat">
-        <h2 style="margin: 0; font-size: 20px; color: #38bdf8;">PHÒNG THÍ NGHIỆM AR</h2>
-        <p style="color: #94a3b8; font-size: 14px; margin-top: 8px;">Nhấn để bật Camera và Âm thanh thuyết minh</p>
-        <button id="btn-kich-hoat" onclick="moKhoaTraiNghiem()">BẮT ĐẦU TRẢI NGHIỆM</button>
-    </div>
+    phuDe.innerText = cauNoi;
     
-    <div id="bang-thong-bao">
-        <div id="tieu-de">Đang tìm thẻ...</div>
-        <div id="noi-dung">Hãy hướng camera vào thẻ Na và H₂O rồi đẩy lại gần nhau</div>
-    </div>
-    
-    <!-- Debug info -->
-    <div id="debug-info">
-        <div>Thẻ Na: <span id="debug-na">❌</span></div>
-        <div>Thẻ H2O: <span id="debug-h2o">❌</span></div>
-        <div>Khoảng cách: <span id="debug-distance">-</span></div>
-        <div>Trạng thái: <span id="debug-status">Đang chờ...</span></div>
-    </div>
-    
-    <a-scene 
-        mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 2; autoStart: true; filterMinCF:0.001; filterBeta: 0.5; missTolerance: 5; warmupTolerance: 5;" 
-        color-space="sRGB" 
-        renderer="alpha: true; antialias: true;"
-        vr-mode-ui="enabled: false" 
-        device-orientation-permission-ui="enabled: false">
-        
-        <!-- Ánh sáng -->
-        <a-light type="ambient" color="#ffffff" intensity="1.2"></a-light>
-        <a-light type="directional" color="#ffffff" intensity="0.8" position="0 3 2"></a-light>
-        
-        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-        
-        <!-- Thẻ 0: Natri (Na) -->
-        <a-entity id="the-na" mindar-image-target="targetIndex: 0">
-            <a-entity id="vat-the-na">
-                <a-sphere position="0 0 0" radius="0.22" material="color: #c0c0c0; shader: standard; metalness: 0.8; roughness: 0.2"></a-sphere>
-                <a-text value="Natri (Na)" position="0 0.35 0" align="center" scale="0.6 0.6 0.6" color="#ffffff"></a-text>
-            </a-entity>
-            
-            <!-- Hiệu ứng phản ứng -->
-            <a-entity id="cum-phan-ung" visible="false">
-                <!-- Giọt Natri nóng chảy -->
-                <a-sphere position="0 0.05 0" radius="0.1" material="color: #ffffff; shader: flat"
-                    animation="property: position; to: 0.1 0.08 0.08; dir: alternate; dur: 150; loop: true">
-                </a-sphere>
-                
-                <!-- Lửa cam -->
-                <a-cone position="0 0.3 0" rotation="0 0 0" radius-bottom="0.26" radius-top="0.01" height="0.65" 
-                    material="color: #ea580c; shader: flat; opacity: 0.85; transparent: true; depthWrite: false"
-                    animation="property: scale; to: 1.3 1.5 1.3; dir: alternate; dur: 110; loop: true">
-                </a-cone>
-                
-                <!-- Lửa vàng -->
-                <a-cone position="0 0.28 0" rotation="0 45 0" radius-bottom="0.18" radius-top="0.01" height="0.55" 
-                    material="color: #facc15; shader: flat; opacity: 0.95; transparent: true; depthWrite: false"
-                    animation="property: scale; to: 1.4 1.4 1.4; dir: alternate; dur: 80; loop: true">
-                </a-cone>
-                
-                <!-- Lõi lửa -->
-                <a-sphere position="0 0.15 0" radius="0.12" 
-                    material="color: #ffffff; shader: flat"
-                    animation="property: scale; to: 1.25 1.4 1.25; dir: alternate; dur: 60; loop: true">
-                </a-sphere>
-                
-                <!-- Khói trắng -->
-                <a-sphere position="0 0.65 0" radius="0.12" material="color: #ffffff; shader: flat; opacity: 0.8; transparent: true; depthWrite: false"
-                    animation="property: position; to: 0.05 1.3 0; dur: 700; loop: true"
-                    animation__sz="property: scale; to: 1.8 1.8 1.8; dur: 700; loop: true"
-                    animation__op="property: material.opacity; to: 0; dur: 700; loop: true">
-                </a-sphere>
-                
-                <a-text value="Na chay ruc ro!" position="0 1.75 0" align="center" scale="0.65 0.65 0.65" color="#facc15"></a-text>
-            </a-entity>
-        </a-entity>
-        
-        <!-- Thẻ 1: Nước (H2O) -->
-        <a-entity id="the-nuoc" mindar-image-target="targetIndex: 1">
-            <a-entity id="vat-the-nuoc">
-                <a-sphere position="0 0 0" radius="0.18" material="color: #ff0000; shader: standard; roughness: 0.4"></a-sphere>
-                <a-sphere position="-0.15 0.12 0" radius="0.1" material="color: #ffffff; shader: standard; roughness: 0.4"></a-sphere>
-                <a-sphere position="0.15 0.12 0" radius="0.1" material="color: #ffffff; shader: standard; roughness: 0.4"></a-sphere>
-                <a-text value="Nuoc (H2O)" position="0 0.35 0" align="center" scale="0.6 0.6 0.6" color="#ffffff"></a-text>
-            </a-entity>
-        </a-entity>
-    </a-scene>
-    
-    <script>
-        let audioCtx = null;
-        let amThanhNoise = null;
-        let giongNoiChuan = null;
-        
-        // Elements
-        const theNa = document.querySelector('#the-na');
-        const theNuoc = document.querySelector('#the-nuoc');
-        const vatTheNa = document.querySelector('#vat-the-na');
-        const vatTheNuoc = document.querySelector('#vat-the-nuoc');
-        const cumPhanUng = document.querySelector('#cum-phan-ung');
-        const tieuDe = document.querySelector('#tieu-de');
-        const noiDung = document.querySelector('#noi-dung');
-        const debugNa = document.querySelector('#debug-na');
-        const debugH2o = document.querySelector('#debug-h2o');
-        const debugDistance = document.querySelector('#debug-distance');
-        const debugStatus = document.querySelector('#debug-status');
-        
-        let daXayRaPhanUng = false;
-        let naVisible = false;
-        let h2oVisible = false;
-        
-        function layGiongDoc() {
-            if ('speechSynthesis' in window) {
-                const voices = window.speechSynthesis.getVoices();
-                giongNoiChuan = voices.find(v => v.lang.includes('vi')) || null;
-            }
-        }
-        if ('speechSynthesis' in window) window.speechSynthesis.onvoiceschanged = layGiongDoc;
-        
-        function moKhoaTraiNghiem() {
-            document.getElementById('lop-kich-hoat').style.display = 'none';
-            try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-            } catch (e) {
-                console.error("Lỗi Audio:", e);
-            }
-            
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const amThanhMoDau = new SpeechSynthesisUtterance('');
-                window.speechSynthesis.speak(amThanhMoDau);
-                layGiongDoc();
-            }
-        }
-        
-        function batAmThanhLua() {
-            try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                
-                const bufferSize = audioCtx.sampleRate * 2;
-                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-                
-                amThanhNoise = audioCtx.createBufferSource();
-                amThanhNoise.buffer = buffer;
-                amThanhNoise.loop = true;
-                
-                const filter = audioCtx.createBiquadFilter();
-                filter.type = 'bandpass';
-                filter.frequency.value = 1100;
-                
-                amThanhNoise.connect(filter);
-                filter.connect(audioCtx.destination);
-                amThanhNoise.start();
-            } catch (e) {
-                console.error("Lỗi âm thanh:", e);
-            }
-        }
-        
-        function tatAmThanhLua() {
-            if (amThanhNoise) {
-                try { amThanhNoise.stop(); } catch(e){}
-                amThanhNoise = null;
-            }
-        }
-        
-        function phatGiongNoi(cauNoi) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const msg = new SpeechSynthesisUtterance(cauNoi);
-                msg.lang = 'vi-VN';
-                if (giongNoiChuan) msg.voice = giongNoiChuan;
-                msg.rate = 0.95;
-                window.speechSynthesis.speak(msg);
-            }
-        }
-        
-        // SỰ KIỆN PHÁT HIỆN THẺ - QUAN TRỌNG NHẤT
-        theNa.addEventListener('targetFound', () => {
-            console.log('✅ Phát hiện thẻ Natri!');
-            naVisible = true;
-            debugNa.innerText = '✅';
-            debugNa.style.color = '#00ff00';
-            debugStatus.innerText = 'Đã thấy Na';
-        });
-        
-        theNa.addEventListener('targetLost', () => {
-            console.log('❌ Mất thẻ Natri!');
-            naVisible = false;
-            debugNa.innerText = '❌';
-            debugNa.style.color = '#ff0000';
-            debugStatus.innerText = 'Mất Na';
-        });
-        
-        theNuoc.addEventListener('targetFound', () => {
-            console.log('✅ Phát hiện thẻ Nước!');
-            h2oVisible = true;
-            debugH2o.innerText = '✅';
-            debugH2o.style.color = '#00ff00';
-            debugStatus.innerText = 'Đã thấy H2O';
-        });
-        
-        theNuoc.addEventListener('targetLost', () => {
-            console.log('❌ Mất thẻ Nước!');
-            h2oVisible = false;
-            debugH2o.innerText = '❌';
-            debugH2o.style.color = '#ff0000';
-            debugStatus.innerText = 'Mất H2O';
-        });
-        
-        // KIỂM TRA KHOẢNG CÁCH - SỬA LỖI
-        function theoDoiKhoangCach() {
-            if (naVisible && h2oVisible) {
-                // Lấy vị trí từ object3D
-                const viTriNa = theNa.object3D.position;
-                const viTriNuoc = theNuoc.object3D.position;
-                
-                // Tính khoảng cách
-                const dx = viTriNa.x - viTriNuoc.x;
-                const dy = viTriNa.y - viTriNuoc.y;
-                const dz = viTriNa.z - viTriNuoc.z;
-                const khoangCach = Math.sqrt(dx*dx + dy*dy + dz*dz);
-                
-                // Update debug
-                debugDistance.innerText = khoangCach.toFixed(3) + 'm';
-                debugStatus.innerText = 'Khoảng cách: ' + khoangCach.toFixed(2) + 'm';
-                
-                console.log(`📏 Khoảng cách: ${khoangCach.toFixed(3)}m`);
-                
-                // Kiểm tra khoảng cách kích hoạt
-                if (khoangCach < 0.8 && !daXayRaPhanUng) {
-                    console.log('⚗️ KÍCH HOẠT PHẢN ỨNG!');
-                    daXayRaPhanUng = true;
-                    
-                    tieuDe.innerText = "2Na + 2H₂O → 2NaOH + H₂↑ (Bùng cháy)";
-                    noiDung.innerText = "Natri nóng chảy vo tròn chạy trên nước, bùng ngọn lửa vàng và khói trắng bốc lên!";
-                    
-                    vatTheNa.setAttribute('visible', 'false');
-                    vatTheNuoc.setAttribute('visible', 'false');
-                    cumPhanUng.setAttribute('visible', 'true');
-                    
-                    batAmThanhLua();
-                    phatGiongNoi("Natri nóng chảy vo tròn chạy trên mặt nước, phản ứng tỏa nhiều nhiệt làm khí hi-đrô bốc cháy với ngọn lửa màu vàng rực và khói trắng bốc lên!");
-                }
-            } else {
-                debugDistance.innerText = '-';
-                
-                // Reset khi không thấy cả 2 thẻ
-                if (!naVisible && !h2oVisible && daXayRaPhanUng) {
-                    console.log('🔄 Reset phản ứng');
-                    daXayRaPhanUng = false;
-                    vatTheNa.setAttribute('visible', 'true');
-                    vatTheNuoc.setAttribute('visible', 'true');
-                    cumPhanUng.setAttribute('visible', 'false');
-                    tatAmThanhLua();
-                    tieuDe.innerText = "Đang tìm thẻ...";
-                    noiDung.innerText = "Hãy hướng camera vào thẻ Na và H₂O rồi đẩy lại gần nhau";
-                    debugStatus.innerText = 'Đang chờ...';
-                }
-            }
-            
-            requestAnimationFrame(theoDoiKhoangCach);
-        }
-        
-        // Bắt đầu theo dõi sau 1 giây để đảm bảo scene đã load
-        setTimeout(() => {
-            console.log('🚀 Bắt đầu theo dõi khoảng cách');
-            theoDoiKhoangCach();
-        }, 1000);
-        
-        // Log khi scene ready
-        document.querySelector('a-scene').addEventListener('arReady', () => {
-            console.log('✅ AR Sẵn sàng!');
-            debugStatus.innerText = 'AR sẵn sàng!';
-        });
-        
-        document.querySelector('a-scene').addEventListener('arError', (e) => {
-            console.error('❌ Lỗi AR:', e);
-            debugStatus.innerText = 'Lỗi AR!';
-        });
-    </script>
-</body>
-</html>
+    // Ẩn sau 10 giây
+    setTimeout(() => {
+        phuDe.style.display = 'none';
+    }, 10000);
+}
