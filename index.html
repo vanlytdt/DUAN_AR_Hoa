@@ -2,402 +2,206 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Phòng Thí Nghiệm Hóa Học AR</title>
-    <!-- A-Frame & MindAR -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>AR Hóa Học 3D - Nhận Diện Thẻ Bài</title>
+
+    <!-- Thư viện A-Frame & MindAR phiên bản ổn định nhất -->
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
-    
+
     <style>
-        body { 
-            margin: 0; 
-            overflow: hidden; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        /* Màn hình chờ khởi động */
+        #start-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
+            z-index: 99999; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; color: white;
+            text-align: center; padding: 20px;
         }
-        
-        /* Màn hình khởi động */
-        #man-hinh-cho {
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%;
-            background: rgba(15, 23, 42, 0.95);
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; 
-            align-items: center;
-            z-index: 10000; 
-            color: #ffffff; 
-            text-align: center; 
-            padding: 20px; 
-            box-sizing: border-box;
+        #start-btn {
+            margin-top: 25px; padding: 14px 36px; font-size: 17px; font-weight: bold;
+            background: linear-gradient(135deg, #10b981, #059669); color: white;
+            border: none; border-radius: 30px; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
         }
-        #btn-batdau {
-            padding: 14px 32px; 
-            font-size: 18px; 
-            font-weight: bold;
-            background: #0284c7; 
-            color: white; 
-            border: none; 
-            border-radius: 30px;
-            cursor: pointer; 
-            margin-top: 20px; 
-            box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);
-            transition: transform 0.2s;
+        #start-btn:active { transform: scale(0.96); }
+
+        /* Bảng hiển thị trạng thái quét */
+        #status-panel {
+            position: fixed; top: 12px; left: 12px; right: 12px;
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px;
+            color: #fff; padding: 10px 16px; font-size: 13px; z-index: 10000;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        #btn-batdau:active { transform: scale(0.95); }
-        
-        /* Bảng thông tin phản ứng */
-        #bang-thong-tin {
-            position: fixed; 
-            bottom: 20px; 
-            left: 50%; 
-            transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.88); 
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(8px);
-            border-radius: 16px; 
-            padding: 14px 20px; 
-            width: 90%; 
-            max-width: 480px;
-            color: white; 
-            z-index: 9999; 
-            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-            text-align: center;
+        .status-dot {
+            width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+            background: #eab308; margin-right: 6px;
         }
-        #ten-phan-ung { font-size: 16px; font-weight: bold; color: #38bdf8; margin-bottom: 4px; }
-        #mo-ta { font-size: 13px; color: #cbd5e1; margin-bottom: 4px; line-height: 1.4; }
-        #phuong-trinh { font-size: 14px; font-weight: 600; color: #facc15; font-family: monospace; }
+        #detected-list { color: #38bdf8; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <!-- Màn hình bật Camera/Audio -->
-    <div id="man-hinh-cho">
-        <h2>🔬 Phòng Thí Nghiệm Hóa Học AR</h2>
-        <p>Hướng camera vào 2 thẻ hóa chất và đưa lại gần nhau để kích hoạt phản ứng.</p>
-        <button id="btn-batdau" onclick="batDau()">BẮT ĐẦU</button>
+    <!-- Màn hình cấp quyền Camera -->
+    <div id="start-screen">
+        <h2 style="color: #38bdf8; margin-bottom: 10px;">PHÒNG THÍ NGHIỆM AR</h2>
+        <p style="color: #94a3b8; max-width: 320px; line-height: 1.5; font-size: 14px;">
+            Hướng camera vào các thẻ bài hóa học để hiển thị mô hình và kích hoạt phản ứng 3D.
+        </p>
+        <button id="start-btn" onclick="startAR()">BẮT ĐẦU QUÉT</button>
     </div>
 
-    <!-- Khung hiển thị thông tin -->
-    <div id="bang-thong-tin">
-        <div id="ten-phan-ung">Đang tìm thẻ...</div>
-        <div id="mo-ta">Hãy hướng camera vào các thẻ bài</div>
-        <div id="phuong-trinh"></div>
+    <!-- Bảng thông báo trên màn hình -->
+    <div id="status-panel">
+        <div><span id="dot" class="status-dot"></span><span id="status-text">Đang chuẩn bị...</span></div>
+        <div>Đang thấy: <span id="detected-list">Chưa có thẻ</span></div>
     </div>
 
-    <!-- AR Scene -->
+    <!-- Khung cảnh AR A-Frame -->
     <a-scene 
-        mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 4; autoStart: false; filterMinCF:0.001; filterBeta: 1000;" 
+        mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 8; filterMinCF: 0.0001; filterBeta: 0.001; missTolerance: 5; autoStart: false;" 
         color-space="sRGB" 
-        renderer="colorManagement: true, physicallyCorrectLights"
+        embedded 
+        renderer="colorManagement: true, physicallyCorrectLights" 
         vr-mode-ui="enabled: false" 
         device-orientation-permission-ui="enabled: false">
         
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-        <a-light type="ambient" color="#ffffff" intensity="1.2"></a-light>
-        <a-light type="directional" color="#ffffff" intensity="0.8" position="0 2 1"></a-light>
 
-        <!-- ================= 1. NATRI + NƯỚC (Index 0 & 1) ================= -->
+        <!-- ================= TARGET 0: Sodium (Na) ================= -->
         <a-entity id="target-0" mindar-image-target="targetIndex: 0">
-            <a-entity id="mol-0" position="0 0 0.1">
-                <a-sphere radius="0.18" material="color: #c0c0c0; metalness: 0.8; roughness: 0.2" animation="property: rotation; to: 0 360 0; loop: true; dur: 4000; easing: linear"></a-sphere>
-                <a-text value="Sodium (Na)" position="0 0.3 0" align="center" scale="0.4 0.4 0.4"></a-text>
-            </a-entity>
-            <!-- Hiệu ứng ngọn lửa -->
-            <a-entity id="fx-1" visible="false" position="0 0 0.1">
-                <a-cone position="0 0.3 0" rotation="90 0 0" radius-bottom="0.26" radius-top="0.01" height="0.65" material="color: #ea580c; shader: flat; opacity: 0.85; transparent: true; depthWrite: false" animation="property: scale; to: 1.3 1.5 1.3; dir: alternate; dur: 110; loop: true"></a-cone>
-                <a-cone position="0 0.28 0" rotation="90 45 0" radius-bottom="0.18" radius-top="0.01" height="0.55" material="color: #facc15; shader: flat; opacity: 0.95; transparent: true; depthWrite: false" animation="property: scale; to: 1.4 1.4 1.4; dir: alternate; dur: 80; loop: true"></a-cone>
-                <a-sphere position="0 0.65 0" radius="0.12" material="color: #ffffff; shader: flat; opacity: 0.8; transparent: true; depthWrite: false" animation="property: position; to: 0.05 1.3 0; dur: 700; loop: true" animation__sz="property: scale; to: 1.8 1.8 1.8; dur: 700; loop: true"></a-sphere>
-                <a-text value="Na bốc cháy rực rỡ!" position="0 1.2 0" align="center" scale="0.5 0.5 0.5" color="#facc15"></a-text>
-            </a-entity>
+            <!-- Mặt phẳng nhận diện -->
+            <a-plane position="0 0 0" height="1" width="1" material="color: #0284c7; opacity: 0.2; transparent: true"></a-plane>
+            <!-- Mô hình 3D nguyên tử đại diện -->
+            <a-sphere position="0 0 0.2" radius="0.18" color="#0284c7" metalness="0.8" roughness="0.2">
+                <a-animation attribute="rotation" to="0 360 0" dur="4000" repeat="indefinite" easing="linear"></a-animation>
+            </a-sphere>
+            <a-text value="Na (Sodium)" align="center" position="0 0.65 0.1" color="#ffffff" width="3" font="roboto"></a-text>
         </a-entity>
 
+        <!-- ================= TARGET 1: Water (H2O) ================= -->
         <a-entity id="target-1" mindar-image-target="targetIndex: 1">
-            <a-entity id="mol-1" position="0 0 0.1" animation="property: rotation; to: 0 360 0; loop: true; dur: 6000; easing: linear">
-                <a-sphere position="0 0 0" radius="0.12" color="#ef4444"></a-sphere>
-                <a-sphere position="-0.12 0.08 0" radius="0.07" color="#ffffff"></a-sphere>
-                <a-sphere position="0.12 0.08 0" radius="0.07" color="#ffffff"></a-sphere>
-                <a-cylinder position="-0.06 0.04 0" rotation="0 0 -45" radius="0.015" height="0.12" color="#94a3b8"></a-cylinder>
-                <a-cylinder position="0.06 0.04 0" rotation="0 0 45" radius="0.015" height="0.12" color="#94a3b8"></a-cylinder>
-                <a-text value="Water (H2O)" position="0 0.3 0" align="center" scale="0.4 0.4 0.4"></a-text>
+            <a-plane position="0 0 0" height="1" width="1" material="color: #06b6d4; opacity: 0.2; transparent: true"></a-plane>
+            <!-- Cụm phân tử H2O -->
+            <a-entity position="0 0 0.2">
+                <a-sphere position="0 0 0" radius="0.14" color="#ef4444"></a-sphere>
+                <a-sphere position="-0.15 -0.1 0" radius="0.08" color="#f8fafc"></a-sphere>
+                <a-sphere position="0.15 -0.1 0" radius="0.08" color="#f8fafc"></a-sphere>
             </a-entity>
+            <a-text value="H2O (Water)" align="center" position="0 0.65 0.1" color="#ffffff" width="3" font="roboto"></a-text>
         </a-entity>
 
-        <!-- ================= 2. NaOH + PHENOLPHTHALEIN (Index 2 & 3) ================= -->
+        <!-- ================= TARGET 2: NaOH ================= -->
         <a-entity id="target-2" mindar-image-target="targetIndex: 2">
-            <a-entity id="mol-2" position="0 0 0.1" animation="property: rotation; to: 0 360 0; loop: true; dur: 5000; easing: linear">
-                <a-sphere position="-0.1 0 0" radius="0.12" color="#0284c7"></a-sphere>
-                <a-sphere position="0.1 0 0" radius="0.09" color="#ef4444"></a-sphere>
-                <a-text value="Sodium hydroxide" position="0 0.3 0" align="center" scale="0.4 0.4 0.4"></a-text>
-            </a-entity>
-            <!-- Hiệu ứng đổi màu hồng cánh sen -->
-            <a-entity id="fx-2" visible="false" position="0 0 0.1">
-                <a-cylinder radius="0.25" height="0.5" rotation="90 0 0" material="color: #ec4899; opacity: 0.85; transparent: true" animation="property: scale; to: 1.1 1.1 1.1; dir: alternate; dur: 500; loop: true"></a-cylinder>
-                <a-text value="Chuyển màu hồng cánh sen" position="0 0.8 0" align="center" scale="0.5 0.5 0.5" color="#f472b6"></a-text>
-            </a-entity>
+            <a-plane position="0 0 0" height="1" width="1" material="color: #10b981; opacity: 0.2; transparent: true"></a-plane>
+            <a-cylinder position="0 0 0.15" radius="0.15" height="0.3" color="#10b981" opacity="0.8"></a-cylinder>
+            <a-text value="NaOH (Base)" align="center" position="0 0.65 0.1" color="#ffffff" width="3" font="roboto"></a-text>
         </a-entity>
 
+        <!-- ================= TARGET 3: Phenolphthalein ================= -->
         <a-entity id="target-3" mindar-image-target="targetIndex: 3">
-            <a-entity id="mol-3" position="0 0 0.1" animation="property: rotation; to: 0 360 0; loop: true; dur: 8000; easing: linear">
-                <a-torus radius="0.14" radius-tubular="0.02" color="#e2e8f0"></a-torus>
-                <a-text value="Phenolphthalein" position="0 0.3 0" align="center" scale="0.4 0.4 0.4"></a-text>
-            </a-entity>
+            <a-plane position="0 0 0" height="1" width="1" material="color: #db2777; opacity: 0.2; transparent: true"></a-plane>
+            <a-octahedron position="0 0 0.2" radius="0.2" color="#db2777"></a-octahedron>
+            <a-text value="Phenolphthalein" align="center" position="0 0.65 0.1" color="#ffffff" width="3" font="roboto"></a-text>
         </a-entity>
 
-        <!-- ================= 3. MƯA VÀNG: Pb(NO3)2 + KI (Index 4 & 5) ================= -->
+        <!-- ================= TARGET 4: Lead(II) Nitrate ================= -->
         <a-entity id="target-4" mindar-image-target="targetIndex: 4">
-            <a-entity id="mol-4" position="0 0 0.1" animation="property: rotation; to: 0 360 0; loop: true; dur: 6000; easing: linear">
-                <a-sphere radius="0.15" material="color: #64748b; metalness: 0.8"></a-sphere>
-                <a-text value="Lead(II) nitrate" position="0 0.3 0" align="center" scale="0.4 0.4 0.4"></a-text>
-            </a-entity>
-            <!-- Hiệu ứng kết tủa lấp lánh -->
-            <a-entity id="fx-3" visible="false" position="0 0 0.1">
-                <a-cylinder position="0 0.2 0" radius="0.2" height="0.5" rotation="90 0 0" material="color: #fef08a; opacity: 0.3; transparent: true"></a-cylinder>
-                <a-box position="-0.07 0.2 0.05" depth="0.03" height="0.03" width="0.03" material="color: #facc15; metalness: 0.9; roughness: 0.1" animation="property: position; to: -0.07 -0.15 0.05; dur: 800; loop: true" animation__r="property: rotation; to: 360 360 0; dur: 800; loop: true"></a-box>
-                <a-box position="0.08 0.25 -0.05" depth="0.04" height="0.04" width="0.04" material="color: #eab308; metalness: 0.9; roughness: 0.1" animation="property: position; to: 0.08 -0.15 -0.05; dur: 1100; loop: true" animation__r="property: rotation; to: 0 360 360; dur: 1100; loop: true"></a-box>
-                <a-box position="0 0.22 0" depth="0.03" height="0.03" width="0.03" material="color: #ca8a04; metalness: 0.9; roughness: 0.1" animation="property: position; to: 0 -0.15 0; dur: 650; loop: true" animation__r="property: rotation; to: 360 180 0; dur: 650; loop: true"></a-box>
-                <a-text value="Ket tua PbI2 vang" position="0 0.9 0" align="center" scale="0.5 0.5 0.5" color="#facc15"></a-text>
-            </a-entity>
+            <a-plane position="0 0 0" height="1" width="1" material="color: #64748b; opacity: 0.2; transparent: true"></a-plane>
+            <a-box position="0 0 0.2" width="0.25" height="0.25" depth="0.25" color="#94a3b8"></a-box>
+            <a-text value="Pb(NO3)2" align="center" position="0 0.65 0.1" color="#ffffff" width="3" font="roboto"></a-text>
         </a-entity>
 
+        <!-- ================= TARGET 5: Potassium Iodide (KI) ================= -->
         <a-entity id="target-5" mindar-image-target="targetIndex: 5">
-            <a-entity id="mol-5" position="0 0 0.1" animation="property: rotation; to: 0 360 0; loop: true; dur: 6000; easing: linear">
-                <a-sphere position="-0.08 0 0" radius="0.09" color="#8b5cf6"></a-sphere>
-                <a-sphere position="0.08 0 0" radius="0.12" color="#7e22ce"></a-sphere>
-                <a-text value="Potassium iodide" position="0 0.3 0" align="center" scale="0.4 0.4 0.4"></a-text>
-            </a-entity>
+            <a-plane position="0 0 0" height="1" width="1" material="color: #eab308; opacity: 0.2; transparent: true"></a-plane>
+            <a-dodecahedron position="0 0 0.2" radius="0.18" color="#eab308"></a-dodecahedron>
+            <a-text value="KI (Potassium Iodide)" align="center" position="0 0.65 0.1" color="#ffffff" width="3" font="roboto"></a-text>
         </a-entity>
 
-        <!-- ================= 4. NÚI LỬA: (NH4)2Cr2O7 + HEAT (Index 6 & 7) ================= -->
+        <!-- ================= TARGET 6: Ammonium Dichromate ================= -->
         <a-entity id="target-6" mindar-image-target="targetIndex: 6">
-            <a-entity id="mol-6" position="0 0 0.1">
-                <a-cone position="0 0.1 0" rotation="90 0 0" radius-bottom="0.2" radius-top="0.01" height="0.2" material="color: #ea580c; roughness: 0.8"></a-cone>
-                <a-text value="Ammonium dichromate" position="0 0.3 0" align="center" scale="0.35 0.35 0.35"></a-text>
-            </a-entity>
-            <!-- Hiệu ứng núi lửa phun trào -->
-            <a-entity id="fx-4" visible="false" position="0 0 0.1">
-                <a-cone position="0 0.2 0" rotation="90 0 0" radius-bottom="0.35" radius-top="0.05" height="0.4" material="color: #14532d; roughness: 0.9" animation="property: scale; to: 1.3 1.3 1.3; dur: 1000; loop: true; dir: alternate"></a-cone>
-                <a-sphere position="0 0.4 0" radius="0.08" material="color: #f97316; shader: flat" animation="property: position; to: 0.05 0.8 0; dur: 400; loop: true"></a-sphere>
-                <a-sphere position="-0.05 0.5 0" radius="0.06" material="color: #eab308; shader: flat" animation="property: position; to: -0.05 0.9 0; dur: 600; loop: true"></a-sphere>
-                <a-text value="Tao tro xanh Cr2O3" position="0 1.2 0" align="center" scale="0.5 0.5 0.5" color="#4ade80"></a-text>
-            </a-entity>
+            <a-plane position="0 0 0" height="1" width="1" material="color: #f97316; opacity: 0.2; transparent: true"></a-plane>
+            <a-tetrahedron position="0 0 0.2" radius="0.22" color="#ea580c"></a-tetrahedron>
+            <a-text value="(NH4)2Cr2O7" align="center" position="0 0.65 0.1" color="#ffffff" width="3" font="roboto"></a-text>
         </a-entity>
 
+        <!-- ================= TARGET 7: Mồi lửa (Heat) ================= -->
         <a-entity id="target-7" mindar-image-target="targetIndex: 7">
-            <a-entity id="mol-7" position="0 0 0.1">
-                <a-cylinder position="0 0.08 0" radius="0.015" height="0.25" material="color: #78350f"></a-cylinder>
-                <a-cone position="0 0.25 0" rotation="90 0 0" radius-bottom="0.1" radius-top="0.01" height="0.3" material="color: #ef4444; shader: flat" animation="property: scale; to: 1.2 1.4 1.2; dir: alternate; dur: 150; loop: true"></a-cone>
-                <a-text value="Nhiet do (t*)" position="0 0.45 0" align="center" scale="0.45 0.45 0.45"></a-text>
-            </a-entity>
+            <a-plane position="0 0 0" height="1" width="1" material="color: #ef4444; opacity: 0.2; transparent: true"></a-plane>
+            <a-cone position="0 0 0.2" radius-bottom="0.18" radius-top="0" height="0.35" color="#ef4444"></a-cone>
+            <a-text value="Moi Lua (t*)" align="center" position="0 0.65 0.1" color="#ffffff" width="3" font="roboto"></a-text>
         </a-entity>
 
     </a-scene>
 
     <script>
-        const KHOANG_CACH_PHAN_UNG = 0.5;
+        const sceneEl = document.querySelector('a-scene');
+        const statusText = document.getElementById('status-text');
+        const dot = document.getElementById('dot');
+        const detectedList = document.getElementById('detected-list');
 
-        const danhSachPhanUng = [
-            {
-                id: 1,
-                t1: document.querySelector('#target-0'),
-                t2: document.querySelector('#target-1'),
-                m1: document.querySelector('#mol-0'),
-                m2: document.querySelector('#mol-1'),
-                fx: document.querySelector('#fx-1'),
-                title: "Phản ứng: Sodium + Nước",
-                eq: "2Na + 2H₂O → 2NaOH + H₂↑",
-                desc: "Sodium nóng chảy vo tròn chạy trên mặt nước, toả nhiệt mạnh làm khí hydrogen bốc cháy với ngọn lửa màu vàng.",
-                speech: "Sodium phản ứng mãnh liệt với nước, tỏa nhiều nhiệt làm khí hydrogen bốc cháy với ngọn lửa màu vàng rực rỡ.",
-                dangChay: false,
-                coAmThanh: true
-            },
-            {
-                id: 2,
-                t1: document.querySelector('#target-2'),
-                t2: document.querySelector('#target-3'),
-                m1: document.querySelector('#mol-2'),
-                m2: document.querySelector('#mol-3'),
-                fx: document.querySelector('#fx-2'),
-                title: "Thí nghiệm: Nhận biết Base bằng Phenolphthalein",
-                eq: "OH⁻ + HIn ⇌ In⁻ + H₂O",
-                desc: "Dung dịch Sodium hydroxide (base) làm dung dịch Phenolphthalein không màu chuyển sang màu hồng cánh sen.",
-                speech: "Dung dịch Sodium hydroxide làm phenolphthalein không màu chuyển sang màu hồng cánh sen đặc trưng.",
-                dangChay: false,
-                coAmThanh: false
-            },
-            {
-                id: 3,
-                t1: document.querySelector('#target-4'),
-                t2: document.querySelector('#target-5'),
-                m1: document.querySelector('#mol-4'),
-                m2: document.querySelector('#mol-5'),
-                fx: document.querySelector('#fx-3'),
-                title: "Thí nghiệm: Mưa vàng",
-                eq: "Pb(NO₃)₂ + 2KI → PbI₂↓ + 2KNO₃",
-                desc: "Phản ứng trao đổi tạo thành kết tủa Lead(II) iodide màu vàng tươi lấp lánh.",
-                speech: "Phản ứng trao đổi giữa lead two nitrate và potassium iodide tạo ra kết tủa lead two iodide màu vàng lấp lánh.",
-                dangChay: false,
-                coAmThanh: false
-            },
-            {
-                id: 4,
-                t1: document.querySelector('#target-6'),
-                t2: document.querySelector('#target-7'),
-                m1: document.querySelector('#mol-6'),
-                m2: document.querySelector('#mol-7'),
-                fx: document.querySelector('#fx-4'),
-                title: "Thí nghiệm: Núi lửa Hóa học",
-                eq: "(NH₄)₂Cr₂O₇ → Cr₂O₃ + N₂↑ + 4H₂O",
-                desc: "Nhiệt phân Ammonium dichromate tự bốc cháy, giải phóng khí nitrogen và tạo bọt xốp Chromium(III) oxide màu xanh lục.",
-                speech: "Nhiệt phân ammonium dichromate giải phóng khí nitrogen và tạo đụn tro chromium three oxide màu xanh lục giống như núi lửa phun trào.",
-                dangChay: false,
-                coAmThanh: true
-            }
+        const cardNames = [
+            "Target 0 (Na)",
+            "Target 1 (H2O)",
+            "Target 2 (NaOH)",
+            "Target 3 (Phenol)",
+            "Target 4 (Pb(NO3)2)",
+            "Target 5 (KI)",
+            "Target 6 (Cr2O7)",
+            "Target 7 (Mồi Lửa)"
         ];
 
-        let audioCtx = null;
-        let amThanhNoise = null;
-        let giongNoiChuan = null;
+        let activeTargets = new Set();
 
-        function layGiongDoc() {
-            if ('speechSynthesis' in window) {
-                const voices = window.speechSynthesis.getVoices();
-                giongNoiChuan = voices.find(v => v.lang.includes('vi') || v.lang.includes('VN')) || null;
-            }
-        }
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.onvoiceschanged = layGiongDoc;
-        }
-
-        function batDau() {
-            document.getElementById('man-hinh-cho').style.display = 'none';
-            const sceneEl = document.querySelector('a-scene');
-            const arSystem = sceneEl.systems['mindar-image-system'];
-            if (arSystem) arSystem.start();
-
-            try {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-            } catch(e) {}
+        function startAR() {
+            document.getElementById('start-screen').style.display = 'none';
+            statusText.innerText = "Đang tải targets.mind...";
             
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const initUtter = new SpeechSynthesisUtterance('');
-                window.speechSynthesis.speak(initUtter);
-                layGiongDoc();
+            const arSystem = sceneEl.systems['mindar-image-system'];
+            arSystem.start();
+        }
+
+        // Sự kiện khi nạp xong file targets.mind
+        sceneEl.addEventListener("arReady", () => {
+            statusText.innerText = "Camera sẵn sàng! Hãy soi thẻ.";
+            dot.style.background = "#22c55e";
+        });
+
+        sceneEl.addEventListener("arError", (err) => {
+            statusText.innerText = "Lỗi nạp file targets.mind!";
+            dot.style.background = "#ef4444";
+            console.error("Lỗi MindAR:", err);
+        });
+
+        // Đăng ký sự kiện phát hiện thẻ cho 8 Target
+        for (let i = 0; i <= 7; i++) {
+            const targetEl = document.querySelector(`#target-${i}`);
+            if (targetEl) {
+                targetEl.addEventListener("targetFound", () => {
+                    activeTargets.add(cardNames[i]);
+                    updateDetectedUI();
+                });
+                targetEl.addEventListener("targetLost", () => {
+                    activeTargets.delete(cardNames[i]);
+                    updateDetectedUI();
+                });
             }
         }
 
-        function batTiengLua() {
-            if (amThanhNoise || !audioCtx) return;
-            const bufferSize = audioCtx.sampleRate * 2;
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-
-            amThanhNoise = audioCtx.createBufferSource();
-            amThanhNoise.buffer = buffer;
-            amThanhNoise.loop = true;
-
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'bandpass';
-            filter.frequency.value = 1000;
-
-            amThanhNoise.connect(filter);
-            filter.connect(audioCtx.destination);
-            amThanhNoise.start();
-        }
-
-        function tatTiengLua() {
-            if (amThanhNoise) {
-                try { amThanhNoise.stop(); } catch(e){}
-                amThanhNoise = null;
+        function updateDetectedUI() {
+            if (activeTargets.size === 0) {
+                detectedList.innerText = "Chưa có thẻ";
+                detectedList.style.color = "#94a3b8";
+            } else {
+                detectedList.innerText = Array.from(activeTargets).join(", ");
+                detectedList.style.color = "#38bdf8";
             }
         }
-
-        function phatThuyetMinh(vanBan) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const msg = new SpeechSynthesisUtterance(vanBan);
-                msg.lang = 'vi-VN';
-                if (giongNoiChuan) msg.voice = giongNoiChuan;
-                msg.rate = 0.95;
-                window.speechSynthesis.speak(msg);
-            }
-        }
-
-        const v1 = new THREE.Vector3();
-        const v2 = new THREE.Vector3();
-
-        function kiemTraVaCham() {
-            let coPhanUngDangChay = false;
-
-            nhomPhanUng.forEach(item => {
-                const thayThe1 = item.t1.object3D && item.t1.object3D.visible;
-                const thayThe2 = item.t2.object3D && item.t2.object3D.visible;
-
-                if (thayThe1 && thayThe2) {
-                    item.t1.object3D.getWorldPosition(v1);
-                    item.t2.object3D.getWorldPosition(v2);
-
-                    const khoangCach = v1.distanceTo(v2);
-
-                    // Khi 2 thẻ ở gần nhau
-                    if (khoangCach < KHOANG_CACH_PHAN_UNG && !item.dangChay) {
-                        item.dangChay = true;
-                        item.m1.setAttribute('visible', 'false');
-                        item.m2.setAttribute('visible', 'false');
-                        item.fx.setAttribute('visible', 'true');
-                        
-                        document.getElementById('ten-phan-ung').innerText = item.title;
-                        document.getElementById('mo-ta').innerText = item.desc;
-                        document.getElementById('phuong-trinh').innerText = item.eq;
-
-                        if (item.coAmThanh) batTiengLua();
-                        phatThuyetMinh(item.speech);
-                    } 
-                    // Khi 2 thẻ bị tách ra
-                    else if (khoangCach >= KHOANG_CACH_PHAN_UNG + 0.25 && item.dangChay) {
-                        item.dangChay = false;
-                        item.m1.setAttribute('visible', 'true');
-                        item.m2.setAttribute('visible', 'true');
-                        item.fx.setAttribute('visible', 'false');
-                        tatTiengLua();
-                        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-                        
-                        document.getElementById('ten-phan-ung').innerText = "Đã tách 2 chất";
-                        document.getElementById('mo-ta').innerText = "Đưa 2 thẻ lại gần nhau để kích hoạt phản ứng.";
-                        document.getElementById('phuong-trinh').innerText = "";
-                    }
-                    if (item.dangChay) coPhanUngDangChay = true;
-                } else if (item.dangChay && !thayThe1 && !thayThe2) {
-                    item.dangChay = false;
-                    item.m1.setAttribute('visible', 'true');
-                    item.m2.setAttribute('visible', 'true');
-                    item.fx.setAttribute('visible', 'false');
-                    tatTiengLua();
-                    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-                }
-            });
-
-            if (!coPhanUngDangChay && document.getElementById('man-hinh-cho').style.display === 'none') {
-                const timThayBatKyTheNao = nhomPhanUng.some(item => 
-                    (item.t1.object3D && item.t1.object3D.visible) || (item.t2.object3D && item.t2.object3D.visible)
-                );
-                if (!timThayBatKyTheNao) {
-                    document.getElementById('ten-phan-ung').innerText = "Đang tìm thẻ...";
-                    document.getElementById('mo-ta').innerText = "Hãy đưa thẻ chất vào tầm nhìn của camera.";
-                    document.getElementById('phuong-trinh').innerText = "";
-                }
-            }
-
-            requestAnimationFrame(kiemTraVaCham);
-        }
-
-        // Bắt đầu vòng lặp
-        kiemTraVaCham();
     </script>
 </body>
 </html>
