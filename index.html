@@ -1,45 +1,149 @@
-function phatGiongNoi(cauNoi) {
-    // Thử phát giọng nói
-    if ('speechSynthesis' in window && giongNoiChuan) {
-        const msg = new SpeechSynthesisUtterance(cauNoi);
-        msg.lang = 'vi-VN';
-        msg.voice = giongNoiChuan;
-        msg.rate = 0.9;
-        window.speechSynthesis.speak(msg);
-    }
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Test AR - 2 Thẻ</title>
     
-    // Luôn hiển thị text (fallback)
-    hienThiPhuDe(cauNoi);
-}
-
-function hienThiPhuDe(cauNoi) {
-    // Tạo hoặc cập nhật phụ đề
-    let phuDe = document.getElementById('phu-de');
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
     
-    if (!phuDe) {
-        phuDe = document.createElement('div');
-        phuDe.id = 'phu-de';
-        phuDe.style.cssText = `
+    <style>
+        body { margin: 0; overflow: hidden; font-family: Arial; }
+        #debug-info {
             position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            top: 10px;
+            left: 10px;
             background: rgba(0, 0, 0, 0.8);
             color: white;
-            padding: 10px 20px;
+            padding: 15px;
             border-radius: 8px;
+            z-index: 9999;
             font-size: 14px;
-            z-index: 10000;
-            max-width: 90%;
-            text-align: center;
-        `;
-        document.body.appendChild(phuDe);
-    }
+            pointer-events: none;
+        }
+        .found { color: #00ff00; }
+        .lost { color: #ff0000; }
+    </style>
+</head>
+<body>
+    <div id="debug-info">
+        <div>Trạng thái: <span id="status">Đang tải...</span></div>
+        <div>Thẻ Na: <span id="na-status" class="lost">❌ Chưa thấy</span></div>
+        <div>Thẻ H2O: <span id="h2o-status" class="lost">❌ Chưa thấy</span></div>
+        <div>Khoảng cách: <span id="distance">-</span></div>
+    </div>
     
-    phuDe.innerText = cauNoi;
+    <a-scene 
+        mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 2; autoStart: true;"
+        vr-mode-ui="enabled: false" 
+        device-orientation-permission-ui="enabled: false"
+        renderer="alpha: true">
+        
+        <a-camera position="0 0 0"></a-camera>
+        
+        <!-- Thẻ 0: Na - ĐẢM BẢO targetIndex: 0 -->
+        <a-entity mindar-image-target="targetIndex: 0">
+            <a-box position="0 0 0.2" size="0.3 0.3 0.3" color="blue"></a-box>
+            <a-text value="Na" position="0 0.5 0" align="center" color="white"></a-text>
+        </a-entity>
+        
+        <!-- Thẻ 1: H2O - ĐẢM BẢO targetIndex: 1 -->
+        <a-entity mindar-image-target="targetIndex: 1">
+            <a-sphere position="0 0 0.2" radius="0.2" color="red"></a-sphere>
+            <a-text value="H2O" position="0 0.5 0" align="center" color="white"></a-text>
+        </a-entity>
+        
+    </a-scene>
     
-    // Ẩn sau 10 giây
-    setTimeout(() => {
-        phuDe.style.display = 'none';
-    }, 10000);
-}
+    <script>
+        const sceneEl = document.querySelector('a-scene');
+        
+        // Lấy các element debug
+        const statusEl = document.getElementById('status');
+        const naStatusEl = document.getElementById('na-status');
+        const h2oStatusEl = document.getElementById('h2o-status');
+        const distanceEl = document.getElementById('distance');
+        
+        // Theo dõi trạng thái thẻ
+        let naVisible = false;
+        let h2oVisible = false;
+        
+        // Lắng nghe sự kiện AR
+        sceneEl.addEventListener('arReady', () => {
+            statusEl.textContent = '✅ Sẵn sàng!';
+            statusEl.style.color = '#00ff00';
+            console.log('✅ AR Ready - targets.mind đã load thành công');
+        });
+        
+        sceneEl.addEventListener('arError', (error) => {
+            statusEl.textContent = '❌ Lỗi: ' + error;
+            statusEl.style.color = '#ff0000';
+            console.error('❌ Lỗi AR:', error);
+        });
+        
+        // Theo dõi thẻ Na (targetIndex: 0)
+        const naEntity = document.querySelector('[mindar-image-target="targetIndex: 0"]');
+        if (naEntity) {
+            naEntity.addEventListener('targetFound', () => {
+                naVisible = true;
+                naStatusEl.textContent = '✅ Đã thấy';
+                naStatusEl.className = 'found';
+                console.log('✅ Phát hiện thẻ Na (index 0)');
+                updateDistance();
+            });
+            
+            naEntity.addEventListener('targetLost', () => {
+                naVisible = false;
+                naStatusEl.textContent = '❌ Mất dấu';
+                naStatusEl.className = 'lost';
+                console.log('❌ Mất thẻ Na');
+                updateDistance();
+            });
+        } else {
+            console.error('❌ Không tìm thấy entity cho targetIndex: 0');
+        }
+        
+        // Theo dõi thẻ H2O (targetIndex: 1)
+        const h2oEntity = document.querySelector('[mindar-image-target="targetIndex: 1"]');
+        if (h2oEntity) {
+            h2oEntity.addEventListener('targetFound', () => {
+                h2oVisible = true;
+                h2oStatusEl.textContent = '✅ Đã thấy';
+                h2oStatusEl.className = 'found';
+                console.log('✅ Phát hiện thẻ H2O (index 1)');
+                updateDistance();
+            });
+            
+            h2oEntity.addEventListener('targetLost', () => {
+                h2oVisible = false;
+                h2oStatusEl.textContent = '❌ Mất dấu';
+                h2oStatusEl.className = 'lost';
+                console.log('❌ Mất thẻ H2O');
+                updateDistance();
+            });
+        } else {
+            console.error('❌ Không tìm thấy entity cho targetIndex: 1');
+        }
+        
+        function updateDistance() {
+            if (naVisible && h2oVisible) {
+                const naPos = naEntity.object3D.position;
+                const h2oPos = h2oEntity.object3D.position;
+                const dist = naPos.distanceTo(h2oPos);
+                distanceEl.textContent = dist.toFixed(2) + 'm';
+                console.log('📏 Khoảng cách:', dist.toFixed(3), 'm');
+            } else {
+                distanceEl.textContent = '-';
+            }
+        }
+        
+        // Cập nhật khoảng cách liên tục
+        setInterval(updateDistance, 100);
+        
+        // Log để debug
+        console.log('🚀 Bắt đầu test AR');
+        console.log('📁 File targets.mind đang được load...');
+    </script>
+</body>
+</html>
