@@ -39,25 +39,25 @@
             padding: 10px 14px;
             font-size: 13px;
             z-index: 99999;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         #reaction-info {
             position: fixed;
-            bottom: 20px;
+            bottom: 24px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(15, 23, 42, 0.95);
+            border: 2px solid #38bdf8;
             color: white;
-            padding: 15px 25px;
-            border-radius: 10px;
+            padding: 14px 24px;
+            border-radius: 12px;
             z-index: 99999;
             text-align: center;
             display: none;
-            animation: pulse 1s infinite;
-        }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.5);
+            min-width: 280px;
         }
         .dot {
             width: 10px; height: 10px;
@@ -73,44 +73,43 @@
 
     <div id="hud">
         <div><span id="status-dot" class="dot"></span><span id="status-label">Đang bật camera...</span></div>
-        <div>Thẻ đang quét: <b id="target-label" style="color: #38bdf8;">Chưa có</b></div>
+        <div>Đang thấy: <b id="target-label" style="color: #38bdf8;">Chưa có</b></div>
     </div>
 
     <div id="reaction-info">
-        <h3 style="margin-bottom: 5px;">⚗️ PHẢN ỨNG HÓA HỌC!</h3>
-        <p id="reaction-text"></p>
+        <h3 id="reaction-title" style="margin-bottom: 4px; font-size: 16px;">⚗️ PHẢN ỨNG HÓA HỌC!</h3>
+        <p id="reaction-text" style="font-size: 13px; color: #cbd5e1;"></p>
     </div>
 
     <a-scene 
-        mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 8; filterMinCF: 0.001; filterBeta: 0.5; missTolerance: 5; warmupTolerance: 5;"
+        mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 4; filterMinCF: 0.001; filterBeta: 100; missTolerance: 3;"
         embedded
         color-space="sRGB" 
         renderer="colorManagement: true; alpha: true; antialias: true;" 
         vr-mode-ui="enabled: false" 
-        device-orientation-permission-ui="enabled: false"
-        style="background: transparent !important;">
+        device-orientation-permission-ui="enabled: false">
         
         <a-entity light="type: ambient; color: #ffffff; intensity: 1.5;"></a-entity>
         <a-entity light="type: directional; color: #ffffff; intensity: 1.2; position: 1 2 1;"></a-entity>
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <!-- TARGET 0: Na (Sodium) -->
+        <!-- TARGET 0: Na -->
         <a-entity mindar-image-target="targetIndex: 0" id="card-0">
             <a-sphere position="0 0 0.2" radius="0.22" color="#0284c7" material="roughness: 0.3; metalness: 0.1"></a-sphere>
-            <a-text value="Na" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+            <a-text value="Na (Sodium)" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
         </a-entity>
 
-        <!-- TARGET 1: H2O (Water) -->
+        <!-- TARGET 1: H2O -->
         <a-entity mindar-image-target="targetIndex: 1" id="card-1">
             <a-sphere position="0 0 0.2" radius="0.16" color="#ef4444" material="roughness: 0.3"></a-sphere>
             <a-sphere position="-0.16 0.08 0.2" radius="0.09" color="#ffffff" material="roughness: 0.3"></a-sphere>
             <a-sphere position="0.16 0.08 0.2" radius="0.09" color="#ffffff" material="roughness: 0.3"></a-sphere>
-            <a-text value="H2O" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+            <a-text value="H2O (Water)" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
         </a-entity>
 
         <!-- TARGET 2: NaOH -->
         <a-entity mindar-image-target="targetIndex: 2" id="card-2">
-            <a-cylinder position="0 0 0.15" radius="0.16" height="0.3" color="#10b981" material="roughness: 0.3"></a-cylinder>
+            <a-cylinder id="naoh-mesh" position="0 0 0.15" radius="0.16" height="0.3" color="#10b981" material="roughness: 0.3"></a-cylinder>
             <a-text value="NaOH" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
         </a-entity>
 
@@ -141,10 +140,10 @@
         <!-- TARGET 7: Heat -->
         <a-entity mindar-image-target="targetIndex: 7" id="card-7">
             <a-cone position="0 0 0.2" radius-bottom="0.2" radius-top="0" height="0.38" color="#ef4444" material="roughness: 0.3"></a-cone>
-            <a-text value="Heat" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+            <a-text value="Heat (t*)" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
         </a-entity>
 
-        <!-- Container cho hiệu ứng phản ứng -->
+        <!-- Khu vực chứa hiệu ứng phản ứng -->
         <a-entity id="reaction-effects"></a-entity>
 
     </a-scene>
@@ -155,362 +154,217 @@
         const statusDot = document.getElementById('status-dot');
         const targetLabel = document.getElementById('target-label');
         const reactionInfo = document.getElementById('reaction-info');
+        const reactionTitle = document.getElementById('reaction-title');
         const reactionText = document.getElementById('reaction-text');
 
-        // Định nghĩa các phản ứng hóa học
+        const cardNames = ['Na', 'H2O', 'NaOH', 'Phenol', 'Pb(NO3)2', 'KI', '(NH4)2Cr2O7', 'Heat'];
+
         const reactions = {
-            // Na + H2O → NaOH + H2↑ (Phản ứng mãnh liệt, tỏa nhiệt)
             '0-1': {
-                name: '2Na + 2H2O → 2NaOH + H2↑',
-                description: 'Natri phản ứng mãnh liệt với nước!',
+                title: '2Na + 2H2O → 2NaOH + H2↑',
+                desc: 'Natri tan nhanh, sủi bọt khí H2 và tỏa lượng nhiệt lớn!',
                 color: '#ff6b35',
-                effect: 'explosion'
+                type: 'explosion'
             },
-            // NaOH + Phenolphthalein → Màu hồng
             '2-3': {
-                name: 'NaOH + Phenolphthalein → Màu hồng',
-                description: 'Dung dịch chuyển sang màu hồng!',
-                color: '#ff69b4',
-                effect: 'color_change'
+                title: 'NaOH + Phenolphthalein → Màu Hồng',
+                desc: 'Môi trường kiềm làm dung dịch phenolphthalein hóa hồng!',
+                color: '#ec4899',
+                type: 'pink'
             },
-            // Pb(NO3)2 + KI → PbI2↓ + KNO3 (Kết tủa vàng)
             '4-5': {
-                name: 'Pb(NO3)2 + 2KI → PbI2↓ + 2KNO3',
-                description: 'Tạo kết tủa vàng!',
-                color: '#ffd700',
-                effect: 'precipitate'
+                title: 'Pb(NO3)2 + 2KI → PbI2↓ + 2KNO3',
+                desc: 'Tạo kết tủa chì(II) iodua màu vàng lấp lánh (Mưa vàng)!',
+                color: '#eab308',
+                type: 'gold_rain'
             },
-            // (NH4)2Cr2O7 + Heat → Cr2O3 + N2 + H2O (Phun trào núi lửa)
             '6-7': {
-                name: '(NH4)2Cr2O7 → Cr2O3 + N2 + 4H2O',
-                description: 'Phản ứng phun trào núi lửa!',
-                color: '#ff4500',
-                effect: 'volcano'
+                title: '(NH4)2Cr2O7 → Cr2O3 + N2↑ + 4H2O',
+                desc: 'Nhiệt phân muối đicromat tạo tàn tro xanh và tia lửa như núi lửa!',
+                color: '#f97316',
+                type: 'volcano'
             }
         };
 
-        let activeTargets = new Map(); // Map lưu target đang active với vị trí
-        let currentReaction = null;
+        let visibleCards = new Set();
+        let currentReactionKey = null;
 
-        // Khởi tạo camera
         scene.addEventListener("arReady", () => {
             statusLabel.innerText = "Camera sẵn sàng!";
             statusDot.classList.add("dot-green");
         });
 
         scene.addEventListener("arError", (e) => {
-            statusLabel.innerText = "Lỗi khởi động camera!";
-            console.error("AR Error:", e);
+            statusLabel.innerText = "Lỗi nạp camera/targets!";
+            console.error(e);
         });
 
-        // Theo dõi các target
         for (let i = 0; i < 8; i++) {
-            const cardEl = document.querySelector(`#card-${i}`);
-            if (cardEl) {
-                cardEl.addEventListener("targetFound", (event) => {
-                    const position = event.detail.position;
-                    activeTargets.set(i, position);
+            const el = document.querySelector(`#card-${i}`);
+            if (el) {
+                el.addEventListener("targetFound", () => {
+                    visibleCards.add(i);
                     updateHUD();
-                    checkReactions();
                 });
-
-                cardEl.addEventListener("targetLost", () => {
-                    activeTargets.delete(i);
+                el.addEventListener("targetLost", () => {
+                    visibleCards.delete(i);
                     updateHUD();
-                    if (currentReaction) {
-                        stopReaction();
-                    }
                 });
             }
         }
 
-        // Cập nhật vị trí targets liên tục
-        setInterval(() => {
-            if (activeTargets.size >= 2) {
-                checkReactions();
-            }
-        }, 100);
-
         function updateHUD() {
-            if (activeTargets.size === 0) {
+            if (visibleCards.size === 0) {
                 targetLabel.innerText = "Chưa có";
                 targetLabel.style.color = "#94a3b8";
             } else {
-                const names = Array.from(activeTargets.keys()).map(i => {
-                    const names = ['Na', 'H2O', 'NaOH', 'Phenol', 'Pb(NO3)2', 'KI', '(NH4)2Cr2O7', 'Heat'];
-                    return names[i];
-                });
+                const names = Array.from(visibleCards).map(id => cardNames[id]);
                 targetLabel.innerText = names.join(" + ");
                 targetLabel.style.color = "#38bdf8";
             }
         }
 
-        // Kiểm tra các phản ứng có thể xảy ra
-        function checkReactions() {
-            const activeIndices = Array.from(activeTargets.keys());
-            
-            for (let i = 0; i < activeIndices.length; i++) {
-                for (let j = i + 1; j < activeIndices.length; j++) {
-                    const key1 = `${activeIndices[i]}-${activeIndices[j]}`;
-                    const key2 = `${activeIndices[j]}-${activeIndices[i]}`;
-                    
-                    const reaction = reactions[key1] || reactions[key2];
-                    
-                    if (reaction) {
-                        // Kiểm tra khoảng cách giữa 2 thẻ
-                        const pos1 = getTargetPosition(activeIndices[i]);
-                        const pos2 = getTargetPosition(activeIndices[j]);
-                        
-                        if (pos1 && pos2) {
-                            const distance = calculateDistance(pos1, pos2);
-                            
-                            // Nếu khoảng cách < 0.5 (50cm trong không gian AR)
-                            if (distance < 0.5) {
-                                triggerReaction(reaction, activeIndices[i], activeIndices[j]);
+        // Tọa độ thực tế thế giới (World Position)
+        const v1 = new THREE.Vector3();
+        const v2 = new THREE.Vector3();
+
+        // Kiểm tra khoảng cách liên tục mỗi khung hình render
+        scene.addEventListener('renderloop', () => {
+            if (visibleCards.size < 2) {
+                if (currentReactionKey) stopReaction();
+                return;
+            }
+
+            const activeList = Array.from(visibleCards);
+            let foundReaction = false;
+
+            for (let i = 0; i < activeList.length; i++) {
+                for (let j = i + 1; j < activeList.length; j++) {
+                    const id1 = activeList[i];
+                    const id2 = activeList[j];
+
+                    const pairKey = id1 < id2 ? `${id1}-${id2}` : `${id2}-${id1}`;
+                    const reactionData = reactions[pairKey];
+
+                    if (reactionData) {
+                        const el1 = document.querySelector(`#card-${id1}`);
+                        const el2 = document.querySelector(`#card-${id2}`);
+
+                        if (el1 && el2 && el1.object3D && el2.object3D) {
+                            el1.object3D.getWorldPosition(v1);
+                            el2.object3D.getWorldPosition(v2);
+
+                            const distance = v1.distanceTo(v2);
+
+                            // Ngưỡng phát hiện va chạm: dưới 1.2 mét trong không gian AR
+                            if (distance < 1.2) {
+                                foundReaction = true;
+                                if (currentReactionKey !== pairKey) {
+                                    triggerReaction(pairKey, reactionData, v1, v2);
+                                }
                                 return;
                             }
                         }
                     }
                 }
             }
-            
-            // Không có phản ứng nào đủ gần
-            if (currentReaction) {
+
+            if (!foundReaction && currentReactionKey) {
                 stopReaction();
             }
-        }
+        });
 
-        function getTargetPosition(targetIndex) {
-            const cardEl = document.querySelector(`#card-${targetIndex}`);
-            if (cardEl) {
-                const position = cardEl.getAttribute('position');
-                return position;
-            }
-            return null;
-        }
+        function triggerReaction(key, data, pos1, pos2) {
+            currentReactionKey = key;
+            reactionInfo.style.display = "block";
+            reactionInfo.style.borderColor = data.color;
+            reactionTitle.innerText = "⚗️ " + data.title;
+            reactionText.innerText = data.desc;
 
-        function calculateDistance(pos1, pos2) {
-            const dx = pos1.x - pos2.x;
-            const dy = pos1.y - pos2.y;
-            const dz = pos1.z - pos2.z;
-            return Math.sqrt(dx*dx + dy*dy + dz*dz);
-        }
-
-        function triggerReaction(reaction, target1, target2) {
-            if (currentReaction && currentReaction.name === reaction.name) {
-                return; // Đã có phản ứng này đang diễn ra
-            }
-            
-            currentReaction = reaction;
-            
-            // Hiển thị thông tin phản ứng
-            reactionInfo.style.display = 'block';
-            reactionText.innerHTML = `
-                <strong>${reaction.name}</strong><br>
-                ${reaction.description}
-            `;
-            reactionInfo.style.borderColor = reaction.color;
-            reactionInfo.style.boxShadow = `0 0 20px ${reaction.color}`;
-            
-            // Tạo hiệu ứng 3D tùy theo loại phản ứng
-            createReactionEffect(reaction.effect, target1, target2);
-            
-            // Tự động ẩn sau 5 giây
-            setTimeout(() => {
-                if (currentReaction && currentReaction.name === reaction.name) {
-                    stopReaction();
-                }
-            }, 5000);
-        }
-
-        function createReactionEffect(effectType, target1, target2) {
-            const effectsContainer = document.getElementById('reaction-effects');
-            const pos1 = getTargetPosition(target1);
-            const pos2 = getTargetPosition(target2);
-            
-            if (!pos1 || !pos2) return;
-            
-            // Vị trí trung bình giữa 2 thẻ
-            const midX = (pos1.x + pos2.x) / 2;
-            const midY = (pos1.y + pos2.y) / 2;
-            const midZ = (pos1.z + pos2.z) / 2;
-            
-            switch(effectType) {
-                case 'explosion':
-                    // Hiệu ứng nổ cho Na + H2O
-                    createExplosionEffect(midX, midY, midZ);
-                    break;
-                    
-                case 'color_change':
-                    // Hiệu ứng đổi màu cho NaOH + Phenolphthalein
-                    createColorChangeEffect(midX, midY, midZ);
-                    break;
-                    
-                case 'precipitate':
-                    // Hiệu ứng kết tủa cho Pb(NO3)2 + KI
-                    createPrecipitateEffect(midX, midY, midZ);
-                    break;
-                    
-                case 'volcano':
-                    // Hiệu ứng núi lửa cho (NH4)2Cr2O7 + Heat
-                    createVolcanoEffect(midX, midY, midZ);
-                    break;
-            }
-        }
-
-        function createExplosionEffect(x, y, z) {
-            const effectsContainer = document.getElementById('reaction-effects');
-            
-            // Tạo nhiều hạt nhỏ bay ra
-            for (let i = 0; i < 20; i++) {
-                const particle = document.createElement('a-sphere');
-                particle.setAttribute('position', `${x} ${y} ${z}`);
-                particle.setAttribute('radius', '0.05');
-                particle.setAttribute('color', ['#ff6b35', '#ff4500', '#ffa500'][Math.floor(Math.random() * 3)]);
-                particle.setAttribute('material', 'transparent: true; opacity: 0.8');
-                
-                // Animation bay ra
-                const angle = (Math.PI * 2 * i) / 20;
-                const velocity = 0.5 + Math.random() * 0.5;
-                const dx = Math.cos(angle) * velocity;
-                const dy = Math.sin(angle) * velocity;
-                const dz = (Math.random() - 0.5) * velocity;
-                
-                particle.setAttribute('animation', `
-                    property: position;
-                    from: ${x} ${y} ${z};
-                    to: ${x + dx} ${y + dy} ${z + dz};
-                    dur: 1000;
-                    easing: easeOutCubic;
-                    loop: false
-                `);
-                
-                effectsContainer.appendChild(particle);
-                
-                // Xóa hạt sau khi animation kết thúc
-                setTimeout(() => {
-                    particle.parentNode.removeChild(particle);
-                }, 1000);
-            }
-            
-            // Tạo ánh sáng flash
-            const flash = document.createElement('a-light');
-            flash.setAttribute('type', 'point');
-            flash.setAttribute('position', `${x} ${y} ${z}`);
-            flash.setAttribute('intensity', '3');
-            flash.setAttribute('color', '#ff6b35');
-            effectsContainer.appendChild(flash);
-            
-            setTimeout(() => {
-                flash.parentNode.removeChild(flash);
-            }, 500);
-        }
-
-        function createColorChangeEffect(x, y, z) {
-            const effectsContainer = document.getElementById('reaction-effects');
-            
-            // Tạo khối cầu màu hồng xuất hiện
-            const sphere = document.createElement('a-sphere');
-            sphere.setAttribute('position', `${x} ${y} ${z}`);
-            sphere.setAttribute('radius', '0.3');
-            sphere.setAttribute('color', '#ff69b4');
-            sphere.setAttribute('material', 'transparent: true; opacity: 0.6');
-            
-            sphere.setAttribute('animation', `
-                property: scale;
-                from: 0.1 0.1 0.1;
-                to: 1 1 1;
-                dur: 2000;
-                easing: easeOutElastic;
-                loop: false
-            `);
-            
-            effectsContainer.appendChild(sphere);
-            
-            setTimeout(() => {
-                sphere.parentNode.removeChild(sphere);
-            }, 3000);
-        }
-
-        function createPrecipitateEffect(x, y, z) {
-            const effectsContainer = document.getElementById('reaction-effects');
-            
-            // Tạo các hạt kết tủa vàng rơi xuống
-            for (let i = 0; i < 15; i++) {
-                const particle = document.createElement('a-sphere');
-                particle.setAttribute('position', `${x + (Math.random() - 0.5) * 0.3} ${y + 0.3} ${z + (Math.random() - 0.5) * 0.3}`);
-                particle.setAttribute('radius', '0.03');
-                particle.setAttribute('color', '#ffd700');
-                particle.setAttribute('material', 'metalness: 0.8; roughness: 0.2');
-                
-                particle.setAttribute('animation', `
-                    property: position;
-                    to: ${x + (Math.random() - 0.5) * 0.3} ${y - 0.2} ${z + (Math.random() - 0.5) * 0.3};
-                    dur: ${1000 + Math.random() * 1000};
-                    easing: easeInQuad;
-                    loop: false
-                `);
-                
-                effectsContainer.appendChild(particle);
-                
-                setTimeout(() => {
-                    particle.parentNode.removeChild(particle);
-                }, 2000);
-            }
-        }
-
-        function createVolcanoEffect(x, y, z) {
-            const effectsContainer = document.getElementById('reaction-effects');
-            
-            // Tạo hiệu ứng phun trào
-            for (let i = 0; i < 30; i++) {
-                const particle = document.createElement('a-sphere');
-                particle.setAttribute('position', `${x} ${y} ${z}`);
-                particle.setAttribute('radius', '0.04');
-                particle.setAttribute('color', ['#ff4500', '#ff6347', '#ffa500'][Math.floor(Math.random() * 3)]);
-                particle.setAttribute('material', 'emissive: #ff4500; emissiveIntensity: 0.5');
-                
-                const angle = Math.random() * Math.PI * 2;
-                const height = 0.5 + Math.random() * 0.5;
-                const spread = 0.2 + Math.random() * 0.3;
-                
-                particle.setAttribute('animation', `
-                    property: position;
-                    to: ${x + Math.cos(angle) * spread} ${y + height} ${z + Math.sin(angle) * spread};
-                    dur: ${1500 + Math.random() * 1000};
-                    easing: easeOutCubic;
-                    loop: false
-                `);
-                
-                effectsContainer.appendChild(particle);
-                
-                setTimeout(() => {
-                    particle.parentNode.removeChild(particle);
-                }, 2500);
-            }
+            const mid = new THREE.Vector3().addVectors(pos1, pos2).multiplyScalar(0.5);
+            playEffect(data.type, mid);
         }
 
         function stopReaction() {
-            currentReaction = null;
-            reactionInfo.style.display = 'none';
-            
-            // Xóa tất cả effects
-            const effectsContainer = document.getElementById('reaction-effects');
-            while (effectsContainer.firstChild) {
-                effectsContainer.removeChild(effectsContainer.firstChild);
+            currentReactionKey = null;
+            reactionInfo.style.display = "none";
+            const fxContainer = document.getElementById('reaction-effects');
+            while (fxContainer.firstChild) {
+                fxContainer.removeChild(fxContainer.firstChild);
             }
+            // Khôi phục màu gốc nếu là NaOH
+            const naoh = document.getElementById('naoh-mesh');
+            if (naoh) naoh.setAttribute('color', '#10b981');
         }
 
-        // Đảm bảo canvas trong suốt
-        scene.addEventListener('loaded', function() {
-            const canvas = document.querySelector('.a-canvas');
-            if (canvas) {
-                canvas.style.background = 'transparent';
+        function playEffect(type, pos) {
+            const fxContainer = document.getElementById('reaction-effects');
+            fxContainer.innerHTML = '';
+
+            if (type === 'explosion') {
+                // Hiệu ứng tia sáng bùng nổ cho Na + H2O
+                for (let i = 0; i < 16; i++) {
+                    const spark = document.createElement('a-sphere');
+                    spark.setAttribute('position', `${pos.x} ${pos.y} ${pos.z}`);
+                    spark.setAttribute('radius', '0.04');
+                    spark.setAttribute('color', '#ff4500');
+                    
+                    const dx = (Math.random() - 0.5) * 0.8;
+                    const dy = Math.random() * 0.8;
+                    const dz = (Math.random() - 0.5) * 0.8;
+
+                    spark.setAttribute('animation', `
+                        property: position;
+                        to: ${pos.x + dx} ${pos.y + dy} ${pos.z + dz};
+                        dur: 800;
+                        easing: easeOutQuad;
+                        loop: true;
+                    `);
+                    fxContainer.appendChild(spark);
+                }
+            } else if (type === 'pink') {
+                // Đổi NaOH sang màu hồng
+                const naoh = document.getElementById('naoh-mesh');
+                if (naoh) naoh.setAttribute('color', '#ec4899');
+            } else if (type === 'gold_rain') {
+                // Hạt kết tủa vàng rơi
+                for (let i = 0; i < 14; i++) {
+                    const drop = document.createElement('a-sphere');
+                    drop.setAttribute('position', `${pos.x + (Math.random() - 0.5) * 0.4} ${pos.y + 0.3} ${pos.z + (Math.random() - 0.5) * 0.4}`);
+                    drop.setAttribute('radius', '0.025');
+                    drop.setAttribute('color', '#ffd700');
+                    drop.setAttribute('animation', `
+                        property: position;
+                        to: ${pos.x + (Math.random() - 0.5) * 0.4} ${pos.y - 0.3} ${pos.z + (Math.random() - 0.5) * 0.4};
+                        dur: ${1000 + Math.random() * 800};
+                        easing: easeInQuad;
+                        loop: true;
+                    `);
+                    fxContainer.appendChild(drop);
+                }
+            } else if (type === 'volcano') {
+                // Phun trào núi lửa Cr2O7 + Heat
+                for (let i = 0; i < 20; i++) {
+                    const ash = document.createElement('a-sphere');
+                    ash.setAttribute('position', `${pos.x} ${pos.y} ${pos.z}`);
+                    ash.setAttribute('radius', '0.035');
+                    ash.setAttribute('color', '#15803d'); // màu xanh Cr2O3
+                    
+                    const angle = Math.random() * Math.PI * 2;
+                    const h = 0.5 + Math.random() * 0.4;
+                    const spread = 0.3;
+
+                    ash.setAttribute('animation', `
+                        property: position;
+                        to: ${pos.x + Math.cos(angle) * spread} ${pos.y + h} ${pos.z + Math.sin(angle) * spread};
+                        dur: 1200;
+                        easing: easeOutCubic;
+                        loop: true;
+                    `);
+                    fxContainer.appendChild(ash);
+                }
             }
-            if (scene.renderer) {
-                scene.renderer.setClearColor(0x000000, 0);
-            }
-        });
+        }
     </script>
 </body>
 </html>
