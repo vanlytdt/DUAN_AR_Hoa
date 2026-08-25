@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>AR Hóa Học 3D - Khóa Độc Lập Từng Thẻ</title>
+    <title>AR Hóa Học 3D - Khóa Chống Trùng Thẻ</title>
 
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
@@ -11,8 +11,7 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html, body {
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
             overflow: hidden;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: #000;
@@ -51,9 +50,9 @@
         <div>Thẻ đang nhận: <b id="target-label" style="color: #38bdf8;">Chưa có</b></div>
     </div>
 
-    <!-- Tăng filterMinCF lên 0.001 và giảm missTolerance để chống bắt nhầm thẻ -->
+    <!-- Cấu hình khử nhiễu góc nghiêng và giới hạn luồng quét -->
     <a-scene 
-        mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 2; filterMinCF: 0.001; filterBeta: 1000; missTolerance: 2;" 
+        mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 2; filterMinCF: 0.01; filterBeta: 10; missTolerance: 1;" 
         color-space="sRGB" 
         renderer="colorManagement: true, physicallyCorrectLights: true" 
         vr-mode-ui="enabled: false" 
@@ -61,54 +60,70 @@
         
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <!-- TARGET 0: Sodium (Na) -->
-        <a-entity mindar-image-target="targetIndex: 0" id="card-0">
-            <a-sphere position="0 0 0.2" radius="0.22" color="#0284c7" metalness="0.8" roughness="0.2"></a-sphere>
-            <a-text value="Na (Sodium)" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+        <!-- TARGET 0: Na -->
+        <a-entity mindar-image-target="targetIndex: 0" id="target-0">
+            <a-entity id="mesh-0" visible="false">
+                <a-sphere position="0 0 0.2" radius="0.22" color="#0284c7" metalness="0.8" roughness="0.2"></a-sphere>
+                <a-text value="Na (Sodium)" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+            </a-entity>
         </a-entity>
 
-        <!-- TARGET 1: Water (H2O) -->
-        <a-entity mindar-image-target="targetIndex: 1" id="card-1">
-            <a-sphere position="0 0 0.2" radius="0.16" color="#ef4444"></a-sphere>
-            <a-sphere position="-0.16 0.08 0.2" radius="0.09" color="#ffffff"></a-sphere>
-            <a-sphere position="0.16 0.08 0.2" radius="0.09" color="#ffffff"></a-sphere>
-            <a-text value="H2O (Water)" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+        <!-- TARGET 1: H2O -->
+        <a-entity mindar-image-target="targetIndex: 1" id="target-1">
+            <a-entity id="mesh-1" visible="false">
+                <a-sphere position="0 0 0.2" radius="0.16" color="#ef4444"></a-sphere>
+                <a-sphere position="-0.16 0.08 0.2" radius="0.09" color="#ffffff"></a-sphere>
+                <a-sphere position="0.16 0.08 0.2" radius="0.09" color="#ffffff"></a-sphere>
+                <a-text value="H2O (Water)" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+            </a-entity>
         </a-entity>
 
         <!-- TARGET 2: NaOH -->
-        <a-entity mindar-image-target="targetIndex: 2" id="card-2">
-            <a-cylinder position="0 0 0.15" radius="0.16" height="0.3" color="#10b981"></a-cylinder>
-            <a-text value="NaOH (Base)" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+        <a-entity mindar-image-target="targetIndex: 2" id="target-2">
+            <a-entity id="mesh-2" visible="false">
+                <a-cylinder position="0 0 0.15" radius="0.16" height="0.3" color="#10b981"></a-cylinder>
+                <a-text value="NaOH (Base)" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+            </a-entity>
         </a-entity>
 
         <!-- TARGET 3: Phenolphthalein -->
-        <a-entity mindar-image-target="targetIndex: 3" id="card-3">
-            <a-octahedron position="0 0 0.2" radius="0.22" color="#db2777"></a-octahedron>
-            <a-text value="Phenolphthalein" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+        <a-entity mindar-image-target="targetIndex: 3" id="target-3">
+            <a-entity id="mesh-3" visible="false">
+                <a-octahedron position="0 0 0.2" radius="0.22" color="#db2777"></a-octahedron>
+                <a-text value="Phenolphthalein" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+            </a-entity>
         </a-entity>
 
-        <!-- TARGET 4: Lead(II) Nitrate -->
-        <a-entity mindar-image-target="targetIndex: 4" id="card-4">
-            <a-box position="0 0 0.2" width="0.26" height="0.26" depth="0.26" color="#94a3b8"></a-box>
-            <a-text value="Pb(NO3)2" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+        <!-- TARGET 4: Pb(NO3)2 -->
+        <a-entity mindar-image-target="targetIndex: 4" id="target-4">
+            <a-entity id="mesh-4" visible="false">
+                <a-box position="0 0 0.2" width="0.26" height="0.26" depth="0.26" color="#94a3b8"></a-box>
+                <a-text value="Pb(NO3)2" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+            </a-entity>
         </a-entity>
 
         <!-- TARGET 5: KI -->
-        <a-entity mindar-image-target="targetIndex: 5" id="card-5">
-            <a-dodecahedron position="0 0 0.2" radius="0.2" color="#eab308"></a-dodecahedron>
-            <a-text value="KI (Potassium Iodide)" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+        <a-entity mindar-image-target="targetIndex: 5" id="target-5">
+            <a-entity id="mesh-5" visible="false">
+                <a-dodecahedron position="0 0 0.2" radius="0.2" color="#eab308"></a-dodecahedron>
+                <a-text value="KI (Potassium Iodide)" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+            </a-entity>
         </a-entity>
 
         <!-- TARGET 6: (NH4)2Cr2O7 -->
-        <a-entity mindar-image-target="targetIndex: 6" id="card-6">
-            <a-tetrahedron position="0 0 0.2" radius="0.24" color="#ea580c"></a-tetrahedron>
-            <a-text value="(NH4)2Cr2O7" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+        <a-entity mindar-image-target="targetIndex: 6" id="target-6">
+            <a-entity id="mesh-6" visible="false">
+                <a-tetrahedron position="0 0 0.2" radius="0.24" color="#ea580c"></a-tetrahedron>
+                <a-text value="(NH4)2Cr2O7" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+            </a-entity>
         </a-entity>
 
         <!-- TARGET 7: Heat -->
-        <a-entity mindar-image-target="targetIndex: 7" id="card-7">
-            <a-cone position="0 0 0.2" radius-bottom="0.2" radius-top="0" height="0.38" color="#ef4444"></a-cone>
-            <a-text value="Moi Lua (Heat)" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+        <a-entity mindar-image-target="targetIndex: 7" id="target-7">
+            <a-entity id="mesh-7" visible="false">
+                <a-cone position="0 0 0.2" radius-bottom="0.2" radius-top="0" height="0.38" color="#ef4444"></a-cone>
+                <a-text value="Moi Lua (Heat)" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+            </a-entity>
         </a-entity>
 
     </a-scene>
@@ -131,6 +146,7 @@
         ];
 
         let activeSet = new Set();
+        let detectionTimers = {};
 
         scene.addEventListener("arReady", () => {
             statusLabel.innerText = "Camera sẵn sàng!";
@@ -142,16 +158,25 @@
             statusDot.classList.add("dot-red");
         });
 
-        // Đăng ký sự kiện tách biệt cho từng thẻ
+        // Xử lý xác thực chống kích hoạt nhầm hàng loạt
         for (let i = 0; i < 8; i++) {
-            const cardEl = document.querySelector(`#card-${i}`);
-            if (cardEl) {
-                cardEl.addEventListener("targetFound", (event) => {
-                    activeSet.add(cardNames[i]);
-                    updateHUD();
+            const targetEl = document.querySelector(`#target-${i}`);
+            const meshEl = document.querySelector(`#mesh-${i}`);
+
+            if (targetEl && meshEl) {
+                targetEl.addEventListener("targetFound", () => {
+                    // Trì hoãn 120ms để xác thực camera thực sự bám vào thẻ, tránh kích hoạt chớp nhoáng khi lia góc
+                    clearTimeout(detectionTimers[i]);
+                    detectionTimers[i] = setTimeout(() => {
+                        meshEl.setAttribute("visible", "true");
+                        activeSet.add(cardNames[i]);
+                        updateHUD();
+                    }, 120);
                 });
 
-                cardEl.addEventListener("targetLost", (event) => {
+                targetEl.addEventListener("targetLost", () => {
+                    clearTimeout(detectionTimers[i]);
+                    meshEl.setAttribute("visible", "false");
                     activeSet.delete(cardNames[i]);
                     updateHUD();
                 });
