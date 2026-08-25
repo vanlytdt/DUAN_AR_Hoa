@@ -3,132 +3,191 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>AR Hóa Học 3D - Nhận Diện Thẻ Bài</title>
+    <title>AR Hóa Học 3D</title>
 
+    <!-- Nạp thư viện theo đúng thứ tự bắt buộc -->
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
+        /* Màn hình khởi động */
         #start-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
-            z-index: 99999; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; color: white;
-            text-align: center; padding: 20px;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #0f172a; z-index: 999999; display: flex;
+            flex-direction: column; justify-content: center; align-items: center;
+            color: white; text-align: center; padding: 20px;
         }
-        #start-btn {
-            margin-top: 25px; padding: 14px 36px; font-size: 17px; font-weight: bold;
-            background: linear-gradient(135deg, #10b981, #059669); color: white;
-            border: none; border-radius: 30px; cursor: pointer;
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        #btn-start {
+            margin-top: 20px; padding: 14px 32px; font-size: 16px; font-weight: bold;
+            background: #0284c7; color: white; border: none; border-radius: 25px;
+            cursor: pointer; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
         }
-        #status-panel {
-            position: fixed; top: 12px; left: 12px; right: 12px;
-            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px;
-            color: #fff; padding: 10px 16px; font-size: 13px; z-index: 10000;
+
+        /* Bảng hiển thị thông tin khi quét */
+        #hud {
+            position: fixed; top: 10px; left: 10px; right: 10px;
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px;
+            color: white; padding: 10px 14px; font-size: 13px; z-index: 9999;
             display: flex; justify-content: space-between; align-items: center;
         }
-        .status-dot {
-            width: 10px; height: 10px; border-radius: 50%; display: inline-block;
-            background: #eab308; margin-right: 6px;
-        }
+        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+        .dot-green { background: #22c55e; }
+        .dot-red { background: #ef4444; }
+        .dot-yellow { background: #eab308; }
     </style>
 </head>
 <body>
+
+    <!-- Màn hình xin quyền mở Camera -->
     <div id="start-screen">
-        <h2 style="color: #38bdf8; margin-bottom: 10px;">PHÒNG THÍ NGHIỆM AR</h2>
-        <p style="color: #94a3b8; max-width: 320px; line-height: 1.5; font-size: 14px;">
-            Hướng camera vào các thẻ bài hóa học để hiển thị mô hình 3D.
+        <h2 style="color: #38bdf8; margin-bottom: 8px;">PHÒNG THÍ NGHIỆM AR</h2>
+        <p style="color: #94a3b8; font-size: 14px; max-width: 320px;">
+            Nhấn nút bên dưới để cấp quyền mở Camera và tải dữ liệu nhận diện.
         </p>
-        <button id="start-btn" onclick="startAR()">BẮT ĐẦU QUÉT</button>
+        <button id="btn-start" onclick="initAR()">MỞ CAMERA</button>
     </div>
 
-    <div id="status-panel">
-        <div><span id="dot" class="status-dot"></span><span id="status-text">Đang chuẩn bị...</span></div>
+    <!-- Thanh trạng thái -->
+    <div id="hud">
+        <div><span id="status-dot" class="dot dot-yellow"></span><span id="status-label">Đang chờ khởi động...</span></div>
+        <div>Thẻ phát hiện: <b id="target-label" style="color: #38bdf8;">Chưa có</b></div>
     </div>
 
+    <!-- Khung cảnh AR -->
     <a-scene 
-        mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 4; filterMinCF: 0.0001; filterBeta: 0.001; missTolerance: 10; warmupTolerance: 5; autoStart: false;" 
+        mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 8; autoStart: false; filterMinCF: 0.0001; filterBeta: 0.001;" 
         color-space="sRGB" 
-        embedded 
         renderer="colorManagement: true, physicallyCorrectLights" 
         vr-mode-ui="enabled: false" 
         device-orientation-permission-ui="enabled: false">
         
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <!-- TARGET 0: Sodium -->
-        <a-entity mindar-image-target="targetIndex: 0">
-            <a-sphere position="0 0 0.2" radius="0.18" color="#0284c7" metalness="0.8" roughness="0.2"></a-sphere>
-            <a-text value="Na (Sodium)" align="center" position="0 0.65 0.1" color="#ffffff" width="3" font="roboto"></a-text>
+        <!-- Target 0: Sodium (Na) -->
+        <a-entity id="target-0" mindar-image-target="targetIndex: 0">
+            <a-plane position="0 0 0" height="1" width="1" material="color: #0284c7; opacity: 0.3; transparent: true"></a-plane>
+            <a-sphere position="0 0 0.2" radius="0.2" color="#0284c7" metalness="0.8" roughness="0.2"></a-sphere>
+            <a-text value="Na (Sodium)" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
         </a-entity>
 
-        <!-- TARGET 1: Water -->
-        <a-entity mindar-image-target="targetIndex: 1">
-            <a-entity position="0 0 0.2">
-                <a-sphere position="0 0 0" radius="0.14" color="#ef4444"></a-sphere>
-                <a-sphere position="-0.15 -0.1 0" radius="0.08" color="#f8fafc"></a-sphere>
-                <a-sphere position="0.15 -0.1 0" radius="0.08" color="#f8fafc"></a-sphere>
-            </a-entity>
-            <a-text value="H2O (Water)" align="center" position="0 0.65 0.1" color="#ffffff" width="3" font="roboto"></a-text>
+        <!-- Target 1: Water (H2O) -->
+        <a-entity id="target-1" mindar-image-target="targetIndex: 1">
+            <a-plane position="0 0 0" height="1" width="1" material="color: #06b6d4; opacity: 0.3; transparent: true"></a-plane>
+            <a-sphere position="0 0 0.2" radius="0.16" color="#ef4444"></a-sphere>
+            <a-sphere position="-0.16 0.08 0.2" radius="0.09" color="#ffffff"></a-sphere>
+            <a-sphere position="0.16 0.08 0.2" radius="0.09" color="#ffffff"></a-sphere>
+            <a-text value="H2O (Water)" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
         </a-entity>
 
-        <!-- TARGET 2: NaOH -->
-        <a-entity mindar-image-target="targetIndex: 2">
-            <a-cylinder position="0 0 0.15" radius="0.15" height="0.3" color="#10b981" opacity="0.8"></a-cylinder>
-            <a-text value="NaOH (Base)" align="center" position="0 0.65 0.1" color="#ffffff" width="3" font="roboto"></a-text>
+        <!-- Target 2: NaOH -->
+        <a-entity id="target-2" mindar-image-target="targetIndex: 2">
+            <a-plane position="0 0 0" height="1" width="1" material="color: #10b981; opacity: 0.3; transparent: true"></a-plane>
+            <a-cylinder position="0 0 0.15" radius="0.16" height="0.3" color="#10b981" opacity="0.85"></a-cylinder>
+            <a-text value="NaOH (Base)" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
         </a-entity>
 
-        <!-- TARGET 3-7 tương tự... -->
-        <!-- Thêm các target còn lại ở đây -->
-        
+        <!-- Target 3: Phenolphthalein -->
+        <a-entity id="target-3" mindar-image-target="targetIndex: 3">
+            <a-plane position="0 0 0" height="1" width="1" material="color: #db2777; opacity: 0.3; transparent: true"></a-plane>
+            <a-octahedron position="0 0 0.2" radius="0.22" color="#db2777"></a-octahedron>
+            <a-text value="Phenolphthalein" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+        </a-entity>
+
+        <!-- Target 4: Pb(NO3)2 -->
+        <a-entity id="target-4" mindar-image-target="targetIndex: 4">
+            <a-plane position="0 0 0" height="1" width="1" material="color: #64748b; opacity: 0.3; transparent: true"></a-plane>
+            <a-box position="0 0 0.2" width="0.26" height="0.26" depth="0.26" color="#94a3b8"></a-box>
+            <a-text value="Pb(NO3)2" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+        </a-entity>
+
+        <!-- Target 5: KI -->
+        <a-entity id="target-5" mindar-image-target="targetIndex: 5">
+            <a-plane position="0 0 0" height="1" width="1" material="color: #eab308; opacity: 0.3; transparent: true"></a-plane>
+            <a-dodecahedron position="0 0 0.2" radius="0.2" color="#eab308"></a-dodecahedron>
+            <a-text value="KI (Potassium Iodide)" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+        </a-entity>
+
+        <!-- Target 6: (NH4)2Cr2O7 -->
+        <a-entity id="target-6" mindar-image-target="targetIndex: 6">
+            <a-plane position="0 0 0" height="1" width="1" material="color: #ea580c; opacity: 0.3; transparent: true"></a-plane>
+            <a-tetrahedron position="0 0 0.2" radius="0.24" color="#ea580c"></a-tetrahedron>
+            <a-text value="(NH4)2Cr2O7" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+        </a-entity>
+
+        <!-- Target 7: Mồi lửa (Heat) -->
+        <a-entity id="target-7" mindar-image-target="targetIndex: 7">
+            <a-plane position="0 0 0" height="1" width="1" material="color: #ef4444; opacity: 0.3; transparent: true"></a-plane>
+            <a-cone position="0 0 0.2" radius-bottom="0.2" radius-top="0" height="0.38" color="#ef4444"></a-cone>
+            <a-text value="Moi Lua (Heat)" align="center" position="0 0.65 0.1" scale="0.8 0.8 0.8" color="#ffffff"></a-text>
+        </a-entity>
+
     </a-scene>
 
     <script>
-        const sceneEl = document.querySelector('a-scene');
-        const statusText = document.getElementById('status-text');
-        const dot = document.getElementById('dot');
+        const scene = document.querySelector('a-scene');
+        const statusLabel = document.getElementById('status-label');
+        const statusDot = document.getElementById('status-dot');
+        const targetLabel = document.getElementById('target-label');
 
-        function startAR() {
+        const cardNames = [
+            "Target 0 (Na)",
+            "Target 1 (H2O)",
+            "Target 2 (NaOH)",
+            "Target 3 (Phenol)",
+            "Target 4 (Pb(NO3)2)",
+            "Target 5 (KI)",
+            "Target 6 (Cr2O7)",
+            "Target 7 (Mồi Lửa)"
+        ];
+
+        let visibleCards = new Set();
+
+        function initAR() {
             document.getElementById('start-screen').style.display = 'none';
-            statusText.innerText = "Đang khởi tạo camera...";
-            
-            const arSystem = sceneEl.systems['mindar-image-system'];
-            if (arSystem) {
-                arSystem.start();
-            } else {
-                statusText.innerText = "Lỗi: Không tìm thấy MindAR system";
-                console.error("MindAR system không tồn tại");
+            statusLabel.innerText = "Đang nạp file targets.mind (8.1 MB)...";
+
+            const arSystem = scene.systems['mindar-image-system'];
+            arSystem.start();
+        }
+
+        // Bắt sự kiện nạp file .mind
+        scene.addEventListener("arReady", () => {
+            statusLabel.innerText = "Camera sẵn sàng! Hãy soi thẻ.";
+            statusDot.className = "dot dot-green";
+        });
+
+        scene.addEventListener("arError", (e) => {
+            statusLabel.innerText = "Lỗi nạp file targets.mind hoặc Camera!";
+            statusDot.className = "dot dot-red";
+            console.error(e);
+        });
+
+        // Bắt sự kiện quét trúng từng thẻ
+        for (let i = 0; i <= 7; i++) {
+            const targetEl = document.querySelector(`#target-${i}`);
+            if (targetEl) {
+                targetEl.addEventListener("targetFound", () => {
+                    visibleCards.add(cardNames[i]);
+                    updateUI();
+                });
+                targetEl.addEventListener("targetLost", () => {
+                    visibleCards.delete(cardNames[i]);
+                    updateUI();
+                });
             }
         }
 
-        sceneEl.addEventListener("arReady", () => {
-            statusText.innerText = "Camera sẵn sàng! Hãy soi thẻ.";
-            dot.style.background = "#22c55e";
-            console.log("AR Ready");
-        });
-
-        sceneEl.addEventListener("arError", (err) => {
-            statusText.innerText = "Lỗi nạp file targets.mind!";
-            dot.style.background = "#ef4444";
-            console.error("Lỗi MindAR:", err);
-        });
-
-        // Theo dõi các target
-        for (let i = 0; i < 8; i++) {
-            const targetEl = document.querySelector(`[mindar-image-target="targetIndex: ${i}"]`);
-            if (targetEl) {
-                targetEl.addEventListener("targetFound", () => {
-                    console.log(`Target ${i} found!`);
-                    statusText.innerText = `Đã phát hiện thẻ ${i}!`;
-                });
-                targetEl.addEventListener("targetLost", () => {
-                    console.log(`Target ${i} lost`);
-                    statusText.innerText = "Đang tìm kiếm thẻ...";
-                });
+        function updateUI() {
+            if (visibleCards.size === 0) {
+                targetLabel.innerText = "Chưa có";
+                targetLabel.style.color = "#94a3b8";
+            } else {
+                targetLabel.innerText = Array.from(visibleCards).join(", ");
+                targetLabel.style.color = "#38bdf8";
             }
         }
     </script>
