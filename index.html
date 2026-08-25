@@ -8,66 +8,29 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
     <style>
         html, body {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            touch-action: none;
-            -webkit-user-select: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            margin: 0; padding: 0; overflow: hidden; touch-action: none;
             font-family: system-ui, -apple-system, sans-serif;
         }
-
         #bang-thong-bao {
-            position: fixed;
-            top: 16px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.92);
-            color: #ffffff;
-            padding: 12px 20px;
-            border-radius: 12px;
-            text-align: center;
-            z-index: 9999;
-            font-size: 14px;
-            width: 85%;
-            max-width: 400px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.92); color: #ffffff; padding: 12px 20px;
+            border-radius: 12px; text-align: center; z-index: 9999; font-size: 14px;
+            width: 85%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.6);
             border: 1px solid rgba(255,255,255,0.15);
         }
         #tieu-de { font-weight: bold; color: #38bdf8; font-size: 15px; margin-bottom: 4px; }
         #noi-dung { font-size: 13px; color: #e2e8f0; line-height: 1.4; }
-
         #lop-kich-hoat {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.96);
-            z-index: 99999;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            text-align: center;
-            padding: 20px;
-            box-sizing: border-box;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.96); z-index: 99999; display: flex;
+            flex-direction: column; justify-content: center; align-items: center;
+            color: white; text-align: center; padding: 20px; box-sizing: border-box;
         }
         #btn-kich-hoat {
-            padding: 14px 30px;
-            font-size: 16px;
-            font-weight: bold;
-            background: #0284c7;
-            color: #ffffff;
-            border: none;
-            border-radius: 30px;
-            cursor: pointer;
-            margin-top: 20px;
+            padding: 14px 30px; font-size: 16px; font-weight: bold;
+            background: #0284c7; color: #ffffff; border: none;
+            border-radius: 30px; cursor: pointer; margin-top: 20px;
             box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);
         }
     </style>
@@ -77,19 +40,18 @@
     <div id="lop-kich-hoat">
         <h2 style="margin: 0; font-size: 22px; color: #38bdf8;">PHÒNG THÍ NGHIỆM AR</h2>
         <p style="color: #94a3b8; font-size: 14px; margin-top: 10px; max-width: 300px;">
-            Nhấn để bật Camera, Âm thanh hiệu ứng và Thuyết minh tương tác
+            Nhấn nút bên dưới để cấp quyền Camera và bắt đầu quét thẻ.
         </p>
         <button id="btn-kich-hoat" onclick="moKhoaTraiNghiem()">BẮT ĐẦU TRẢI NGHIỆM</button>
     </div>
 
     <div id="bang-thong-bao">
-        <div id="tieu-de">Đang tìm thẻ...</div>
-        <div id="noi-dung">Hãy hướng camera vào bất kỳ cặp thẻ phản ứng nào và đẩy lại gần nhau.</div>
+        <div id="tieu-de">Đang tải dữ liệu...</div>
+        <div id="noi-dung">Vui lòng bấm Bắt đầu trải nghiệm để mở Camera.</div>
     </div>
 
     <a-scene 
-        embedded
-        mindar-image="imageTargetSrc: ./targets-all.mind; maxTrack: 4; autoStart: true; filterMinCF: 0.001; filterBeta: 1000;" 
+        mindar-image="imageTargetSrc: ./targets-all.mind; maxTrack: 4; autoStart: false; filterMinCF: 0.001; filterBeta: 1000;" 
         color-space="sRGB" 
         renderer="colorManagement: true, physicallyCorrectLights"
         vr-mode-ui="enabled: false" 
@@ -99,7 +61,7 @@
         <a-light type="directional" color="#ffffff" intensity="0.8" position="0 3 2"></a-light>
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <!-- ================= NHÓM 1: SODIUM + WATER ================= -->
+        <!-- NHÓM 1: NA + H2O -->
         <a-entity id="target-0" mindar-image-target="targetIndex: 0">
             <a-entity rotation="90 0 0">
                 <a-entity id="vat-the-0">
@@ -126,7 +88,7 @@
             </a-entity>
         </a-entity>
 
-        <!-- ================= NHÓM 2: NaOH + PHENOLPHTHALEIN ================= -->
+        <!-- NHÓM 2: NaOH + PHENOLPHTHALEIN -->
         <a-entity id="target-2" mindar-image-target="targetIndex: 2">
             <a-entity rotation="90 0 0">
                 <a-entity id="vat-the-2" animation="property: rotation; to: 0 360 0; loop: true; dur: 7000; easing: linear">
@@ -150,7 +112,7 @@
             </a-entity>
         </a-entity>
 
-        <!-- ================= NHÓM 3: Pb(NO3)2 + KI ================= -->
+        <!-- NHÓM 3: Pb(NO3)2 + KI -->
         <a-entity id="target-4" mindar-image-target="targetIndex: 4">
             <a-entity rotation="90 0 0">
                 <a-entity id="vat-the-4" animation="property: rotation; to: 0 360 0; loop: true; dur: 8000; easing: linear">
@@ -176,7 +138,7 @@
             </a-entity>
         </a-entity>
 
-        <!-- ================= NHÓM 4: (NH4)2Cr2O7 + HEAT ================= -->
+        <!-- NHÓM 4: (NH4)2Cr2O7 + HEAT -->
         <a-entity id="target-6" mindar-image-target="targetIndex: 6">
             <a-entity rotation="90 0 0">
                 <a-entity id="vat-the-6">
@@ -218,6 +180,16 @@
 
         function moKhoaTraiNghiem() {
             document.getElementById('lop-kich-hoat').style.display = 'none';
+            document.getElementById('tieu-de').innerText = "Đang tìm thẻ...";
+            document.getElementById('noi-dung').innerText = "Hãy hướng camera vào bất kỳ cặp thẻ phản ứng nào và đẩy lại gần nhau.";
+
+            // Kích hoạt Engine AR thủ công
+            const sceneEl = document.querySelector('a-scene');
+            const arSystem = sceneEl.systems['mindar-image-system'];
+            if (arSystem) {
+                arSystem.start();
+            }
+
             try {
                 if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -368,7 +340,7 @@
 
             if (!coNhomDangHoatDong) {
                 const coTheXuatHien = nhomPhanUng.some(n => (n.tA.object3D && n.tA.object3D.visible) || (n.tB.object3D && n.tB.object3D.visible));
-                if (!coTheXuatHien) {
+                if (!coTheXuatHien && document.getElementById('lop-kich-hoat').style.display === 'none') {
                     tieuDe.innerText = "Đang tìm thẻ...";
                     noiDung.innerText = "Hãy hướng camera vào bất kỳ cặp thẻ phản ứng nào và đẩy lại gần nhau.";
                 }
